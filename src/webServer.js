@@ -405,7 +405,7 @@ export function startWebServer(getSock, port = process.env.PORT || 3000) {
     }
   });
 
-  app.listen(port, () => {
+  app.listen(port, '0.0.0.0', () => {
     console.log(`\n🌐 =================================================`);
     console.log(`🚀 WEB PAIRING DASHBOARD IS LIVE!`);
     console.log(`👉 Open: http://localhost:${port}`);
