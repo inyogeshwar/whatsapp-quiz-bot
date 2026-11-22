@@ -12,6 +12,7 @@ import { CONFIG } from './src/config.js';
 import { initDatabase } from './src/database.js';
 import { handleIncomingMessage } from './src/messageHandler.js';
 import { handlePollUpdate, handlePollVoteUpsert, messageStore } from './src/quizEngine.js';
+import { checkResumeChannelAutoPost } from './src/channelEngine.js';
 
 // Initialize SQLite Database
 initDatabase();
@@ -86,6 +87,9 @@ async function startBot() {
       console.log(`🎯 Prefix: ${CONFIG.PREFIX}`);
       console.log(`💬 Commands: ${CONFIG.PREFIX}quiz, ${CONFIG.PREFIX}top, ${CONFIG.PREFIX}rank, ${CONFIG.PREFIX}help`);
       console.log(`==========================================\n`);
+
+      // Resume channel auto-post if active
+      checkResumeChannelAutoPost(sock);
     }
   });
 

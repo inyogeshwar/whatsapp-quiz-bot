@@ -55,6 +55,15 @@ export function initDatabase() {
     );
   `);
 
+  // Bot settings key-value store
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bot_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
   console.log('✅ SQLite Database initialized successfully at:', CONFIG.DB_PATH);
   return db;
 }
@@ -174,4 +183,27 @@ export function resetGroupLeaderboard(groupJid) {
   if (!db) initDatabase();
   const stmt = db.prepare(`DELETE FROM group_scores WHERE group_jid = ?`);
   return stmt.run(groupJid);
+}
+
+export function getBotSetting(key) {
+  if (!db) initDatabase();
+  const row = db.prepare(`SELECT value FROM bot_settings WHERE key = ?`).get(key);
+  return row ? row.value : null;
+}
+
+export function setBotSetting(key, value) {
+  if (!db) initDatabase();
+  const stmt = db.prepare(`
+    INSERT INTO bot_settings (key, value, updated_at)
+    VALUES (?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
+  `);
+  return stmt.run(key, value);
+}
+
+export function getPlayerTier(score) {
+  if (score >= 300) return { title: 'Grandmaster', badge: '👑' };
+  if (score >= 150) return { title: 'Trivia Master', badge: '🥇' };
+  if (score >= 50) return { title: 'Knowledge Seeker', badge: '🥈' };
+  return { title: 'Rookie Quizzer', badge: '🥉' };
 }
