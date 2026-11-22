@@ -19,6 +19,7 @@ Is document me WhatsApp Group & Channel MCQ Quiz Bot ke har ek feature ka detail
 12. [Free AI Image Generator (/image)](#12-free-ai-image-generator-image)
 13. [Group Auto-Moderation & Bad Words Filter (/warn, /automod)](#13-group-auto-moderation--bad-words-filter)
 14. [Reactions, Animated GIFs & Latency Benchmark (/ping)](#14-reactions-animated-gifs--latency-benchmark)
+15. [WhatsApp Account Safety & Anti-Ban Guide](#15-whatsapp-account-safety--anti-ban-guide)
 
 ---
 
@@ -246,3 +247,34 @@ WhatsApp groups me shanti aur decorum maintain karne ke liye advanced moderation
 - **Emoji Reactions:** `/react <emoji>` se kisi bhi message par WhatsApp emoji reaction lagayein (e.g. `/react 🔥`).
 - **Celebration GIFs:** `/gif <caption?>` se high-energy animated celebration video GIFs share karein (`gifPlayback: true`).
 - **Ping & Performance:** `/ping` command se bot ka live response latency (ms), uptime aur RAM usage monitor karein.
+
+---
+
+## 15. WhatsApp Account Safety & Anti-Ban Guide
+
+### ⚠️ WhatsApp Number Ban Kyu Hota Hai? (Main Reasons)
+1. **Anjaan Numbers ko Direct Message (DM) Bhejna:** Agar bot bina permission ke anjaan logon ko personal message bhejta hai aur log use "Report as Spam" karte hain.
+2. **Users dwara "Report & Block" Kiya Jana:** Meta ke automated spam detection models user reports par actively trigger hote hain.
+3. **High-Speed Message Flooding (Spamming):** Ek second me 20-50 messages bina kisi natural delay ke bhejna.
+4. **Fresh / Nayi SIM par Seedhe Bot Chalana:** Naye phone number par pehle hi din hazaron messages flow hone se algorithm flag kar deta hai (Account Age issue).
+5. **Unauthorized Bulk Broadcasts:** Mass marketing lists par unsolicited messages bhejna.
+
+### 🛡️ Hamara Quiz Bot Kyu Safe Hai?
+Hamare is Quiz Bot ka architecture safe aur compliant banaya gaya hai:
+- ✅ **No Personal DMs:** Bot kisi ke inbox me jakar unprompted message nahi bhejta.
+- ✅ **Only In-Group Replies:** Ye sirf group me commands (`/quiz`, `/ai`, `/image`) ya poll responses par react karta hai.
+- ✅ **Built-in Delays:** Har question ke beech 25 second ka answer timer aur 5 second ka pause rehta hai, jisse WhatsApp algorithm ko spamming ka signal nahi milta.
+- ✅ **Native Polls:** WhatsApp ke official Single-Choice Polls ka use karta hai bina chat ko spam kiye.
+
+### 🔒 Ban Se Bachne Ke Golden Rules (Anti-Ban Best Practices)
+1. **Personal / Main Number Use Na Karein:** Hamesha ek Secondary / Alternate SIM ya dedicated bot number use karein taaki aapka personal family/friends ka account disturb na ho.
+2. **Number ko thoda Warm-Up Karein:** Naye number ko pehle 2–3 din normal use karein (1-2 dosto se regular chat karein), uske baad hi bot par lagayein.
+3. **Sirf Apne Groups Me Add Karein:** Bot ko anjaan logo ke random groups me mat daalein jahan koi bina wajah report kar sake.
+4. **Auto-Broadcasting Se Bachein:** Unsolicited spam broadcasting scripts na chalayein.
+
+### 💡 Agar Kabhi Account Flag/Ban Ho Jaye Toh Kya Karein? (Unban in 12-24h)
+Agar WhatsApp par *"This account is not allowed to use WhatsApp"* screen aati hai, toh ghabraiye mat:
+1. WhatsApp app me **"Request a Review"** button par tap karein.
+2. Reason box me ye appeal message likhein:
+   > *"Hello WhatsApp Support, my number was flagged by mistake. I use this number only for educational group quiz discussions and general knowledge practice with students. Please review and restore my account."*
+3. **12 se 24 ghante** ke andar Meta support team account review karke access restore kar deti hai.
