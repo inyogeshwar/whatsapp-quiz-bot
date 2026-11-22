@@ -13,6 +13,7 @@ Is document me WhatsApp Group & Channel MCQ Quiz Bot ke har ek feature ka detail
 6. [In-Chat Question Creator (/addq)](#6-in-chat-question-creator-addq)
 7. [Group Mention Engine (/tagall & @all)](#7-group-mention-engine-tagall--all)
 8. [Complete Commands Cheat Sheet](#8-complete-commands-cheat-sheet)
+9. [Web Pairing Dashboard & 24/7 Cloud Anti-Sleep](#9-web-pairing-dashboard--247-cloud-anti-sleep)
 
 ---
 
@@ -145,3 +146,21 @@ Aapko kisi JSON file ya code ko edit karne ki zaroorat nahi hai. Admin chat me h
 | **/addq** | Chat se hi naya question database me dalein | `/addq Q? \| O1, O2, O3, O4 \| 1 \| GK` |
 | **/categories** | Available chapters aur total questions dekhein | `/categories` |
 | **/help** | Sabhi commands ka quick menu dekhein | `/help` |
+
+---
+
+## 9. Web Pairing Dashboard & 24/7 Cloud Anti-Sleep
+
+### Web Dashboard Overview:
+Bot ke sath ek built-in Express Web Dashboard chalta hai:
+- **URL:** `http://localhost:3000` (ya Render par hosted URL).
+- **Features:**
+  1. **Dark Neon Web UI:** Mobile aur Desktop dono par responsive clean design.
+  2. **Phone Number Input:** Country code ke sath phone number dalein (e.g., `919876543210`).
+  3. **Instant 8-Digit Pairing Code:** Live WhatsApp pairing code generate karta hai with 1-click **Copy Code** button.
+  4. **Live Status Indicator:** Real-time dikhata hai ki bot Online hai ya connection ka wait kar raha hai.
+
+### 24/7 Render Cloud Anti-Sleep (Cron-Job Setup):
+Render free tier 15 minute ke baad sleep ho jata hai. Isko 24/7 active rakhne ke do tareeqe hain:
+1. **Built-in Self-Ping:** Bot khud har 10 minute me apne `/health` endpoint ko ping karta hai.
+2. **Cron-job.org:** [cron-job.org](https://cron-job.org) par `https://your-app.onrender.com/health` ko har 10 minute schedule karein. Bot kabhi sleep nahi hoga!

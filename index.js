@@ -13,9 +13,16 @@ import { initDatabase } from './src/database.js';
 import { handleIncomingMessage } from './src/messageHandler.js';
 import { handlePollUpdate, handlePollVoteUpsert, messageStore } from './src/quizEngine.js';
 import { checkResumeChannelAutoPost } from './src/channelEngine.js';
+import { startWebServer } from './src/webServer.js';
 
 // Initialize SQLite Database
 initDatabase();
+
+// Current active Baileys socket reference
+let currentSock = null;
+
+// Start Web Pairing Dashboard (Flash-MD & Knightbot Style)
+startWebServer(() => currentSock);
 
 // Pairing code argument check (e.g. node index.js --pairing=919876543210)
 const pairingArg = process.argv.find(arg => arg.startsWith('--pairing'));
@@ -42,6 +49,8 @@ async function startBot() {
       return messageStore.get(key.id)?.message;
     }
   });
+
+  currentSock = sock;
 
   // Handle pairing code if requested and not yet registered
   if (pairingNumber && !sock.authState.creds.registered) {

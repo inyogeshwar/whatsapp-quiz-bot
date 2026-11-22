@@ -7,6 +7,9 @@
 [![Baileys](https://img.shields.io/badge/WhatsApp_Engine-Baileys_v7-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://github.com/WhiskeySockets/Baileys)
 [![Database](https://img.shields.io/badge/Database-Node%3Asqlite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://nodejs.org/api/sqlite.html)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
+<br><br>
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/inyogeshwar/whatsapp-quiz-bot)
 
 An automated, ultra-fast WhatsApp MCQ Quiz Bot designed specifically for WhatsApp Groups. Built with **[@whiskeysockets/baileys](https://github.com/WhiskeySockets/Baileys)** and Node.js native **SQLite**, it sends native single-choice interactive polls, decrypts votes in real time, awards speed bonus points, and maintains group-level and global leaderboards.
 
@@ -95,24 +98,50 @@ cd whatsapp-quiz-bot
 npm install
 ```
 
-### 3. Connect to WhatsApp
+### 3. Connect to WhatsApp (3 Flexible Methods)
 
-#### Option A: QR Code (Standard)
+#### Option A: Web Pairing Dashboard (Browser UI ⭐ Recommended)
 ```bash
 npm start
 ```
-1. Open **WhatsApp** on your phone.
-2. Go to **Settings / Three Dots (⋮) > Linked Devices > Link a Device**.
-3. Scan the QR code generated in your terminal.
+1. Open your browser: **`http://localhost:3000`** (or your deployed Render URL).
+2. Enter your WhatsApp phone number with country code (e.g., `919876543210`).
+3. Click **"Get Pairing Code"** and copy the 8-character code with 1 click!
+4. Open WhatsApp > **Linked Devices** > **Link with phone number instead**, and paste the code!
 
-#### Option B: Pairing Code (No Camera Needed)
+#### Option B: Terminal QR Code
+Scan the QR code displayed in the terminal using WhatsApp > **Linked Devices** > **Link a Device**.
+
+#### Option C: CLI Pairing Code
 ```bash
 node index.js --pairing=919876543210
 ```
-*(Replace `919876543210` with your phone number with country code, without `+`)*
-1. Go to **WhatsApp > Linked Devices > Link a Device**.
-2. Tap **"Link with phone number instead"**.
-3. Enter the 8-digit code shown in your terminal.
+
+---
+
+## ☁️ 1-Click Render Cloud Deployment & 24/7 Anti-Sleep
+
+Aapko apna laptop ya PC chalu rakhne ki zaroorat nahi hai. Bot ko **Render.com** par 24/7 free host kar sakte hain:
+
+### Step 1: 1-Click Deploy on Render
+Click the button below to deploy the bot on Render:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/inyogeshwar/whatsapp-quiz-bot)
+
+1. Render par login karein aur **"Apply"** par click karein.
+2. Render build complete hone ke baad aapko ek live URL dega (e.g., `https://whatsapp-quiz-bot.onrender.com`).
+3. Us link ko kholein, apna WhatsApp number dalein aur 8-digit code lein!
+
+### Step 2: Prevent Render From Sleeping (Cron-Job 24/7 Active)
+Render ka free tier 15 minute ke baad sleep par chala jata hai. Isko 24/7 hamesha active rakhne ke liye:
+
+1. **Auto Anti-Sleep (Built-in):** Render par Environment Variable me `APP_URL` add karein with your Render URL (e.g. `https://whatsapp-quiz-bot.onrender.com`). Bot khud har 10 minute me apne aapko ping karta rahega!
+2. **External Free Cron-Job (100% Guaranteed):**
+   - [cron-job.org](https://cron-job.org/) par free account banayein.
+   - **Create Cronjob** par click karein.
+   - **URL:** `https://your-bot.onrender.com/health` (apna Render URL dalein).
+   - **Execution Schedule:** Har 10 minute (`Every 10 minutes`).
+   - Save karein! Ab aapka bot **kabhi sleep nahi hoga aur 24/7 active rahega!**
 
 ---
 
