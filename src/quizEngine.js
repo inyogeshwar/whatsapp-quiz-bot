@@ -71,7 +71,7 @@ function formatDuration(ms) {
 /**
  * Start a new quiz session in a group
  */
-export async function startQuiz(sock, groupJid, questionCount = CONFIG.DEFAULT_QUESTION_COUNT, category = null, tagAll = false) {
+export async function startQuiz(sock, groupJid, questionCount = CONFIG.DEFAULT_QUESTION_COUNT, category = null, tagAll = false, customQuestions = null) {
   if (activeQuizzes.has(groupJid)) {
     await sock.sendMessage(groupJid, {
       text: `⚠️ *A quiz is already active in this group!*\n\nType *${CONFIG.PREFIX}stopquiz* to cancel the current quiz.`
@@ -79,14 +79,14 @@ export async function startQuiz(sock, groupJid, questionCount = CONFIG.DEFAULT_Q
     return;
   }
 
-  let pool = allQuestions;
-  if (category) {
+  let pool = customQuestions || allQuestions;
+  if (!customQuestions && category) {
     const filtered = allQuestions.filter(q => q.category.toLowerCase().includes(category.toLowerCase()));
     if (filtered.length > 0) pool = filtered;
   }
 
-  const count = Math.min(Math.max(1, questionCount), CONFIG.MAX_QUESTION_COUNT, pool.length);
-  const selectedQuestions = shuffleArray(pool).slice(0, count);
+  const count = customQuestions ? customQuestions.length : Math.min(Math.max(1, questionCount), CONFIG.MAX_QUESTION_COUNT, pool.length);
+  const selectedQuestions = customQuestions ? customQuestions : shuffleArray(pool).slice(0, count);
 
   const session = {
     groupJid,

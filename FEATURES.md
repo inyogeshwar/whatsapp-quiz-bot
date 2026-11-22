@@ -14,6 +14,7 @@ Is document me WhatsApp Group & Channel MCQ Quiz Bot ke har ek feature ka detail
 7. [Group Mention Engine (/tagall & @all)](#7-group-mention-engine-tagall--all)
 8. [Complete Commands Cheat Sheet](#8-complete-commands-cheat-sheet)
 9. [Web Pairing Dashboard & 24/7 Cloud Anti-Sleep](#9-web-pairing-dashboard--247-cloud-anti-sleep)
+10. [OpenAI-Compatible AI Chatbot & Live AI Quiz Generator](#10-openai-compatible-ai-chatbot--live-ai-quiz-generator)
 
 ---
 
@@ -145,6 +146,9 @@ Aapko kisi JSON file ya code ko edit karne ki zaroorat nahi hai. Admin chat me h
 | **/channel grouplink [link]** | Channel post ke sath group link promote karein | `/channel grouplink https://chat.whatsapp.com/...` |
 | **/addq** | Chat se hi naya question database me dalein | `/addq Q? \| O1, O2, O3, O4 \| 1 \| GK` |
 | **/categories** | Available chapters aur total questions dekhein | `/categories` |
+| **/ai [prompt]** | AI Chatbot se koi bhi sawaal poochhein | `/ai What is black hole?` |
+| **/aiquiz [topic] [n]**| AI se live fresh MCQs banwake quiz start karein | `/aiquiz Cricket 5` |
+| **/aisettings** | AI API Key, Base URL aur Model configure karein | `/aisettings` |
 | **/help** | Sabhi commands ka quick menu dekhein | `/help` |
 
 ---
@@ -164,3 +168,29 @@ Bot ke sath ek built-in Express Web Dashboard chalta hai:
 Render free tier 15 minute ke baad sleep ho jata hai. Isko 24/7 active rakhne ke do tareeqe hain:
 1. **Built-in Self-Ping:** Bot khud har 10 minute me apne `/health` endpoint ko ping karta hai.
 2. **Cron-job.org:** [cron-job.org](https://cron-job.org) par `https://your-app.onrender.com/health` ko har 10 minute schedule karein. Bot kabhi sleep nahi hoga!
+
+---
+
+## 10. OpenAI-Compatible AI Chatbot & Live AI Quiz Generator
+
+Bot me kisi bhi **OpenAI-Compatible AI Provider** ko connect kiya ja sakta hai (OpenAI, OpenRouter, Groq, DeepSeek, Together AI, Ollama, etc.).
+
+### 1. AI Se Chat Karna:
+- **Command:** `/ai <question>` ya `/gpt <question>`
+- **Example:** `/ai Photo editing ke liye best software kaunsa hai?`
+- Bot group me AI ka clean formatted answer post karega.
+
+### 2. Live AI Quiz Generator (/aiquiz):
+Agar aapko database ke bahar kisi naye topic par quiz chalana hai, toh AI turant naye MCQs banayega:
+- **Command:** `/aiquiz [topic] [count]`
+- **Examples:**
+  - `/aiquiz Indian History 5`
+  - `/aiquiz Cricket World Cup 3`
+  - `/aiquiz Python Programming 4`
+👉 AI turant 4 options aur correct answer ke sath fresh MCQs generate karega aur group me **Single-Choice Poll round live start** kar dega!
+
+### 3. AI Settings Configuration (/aisettings):
+Admin WhatsApp chat se hi API key aur model badal sakta hai:
+- `/aisettings setkey <your_api_key>` — API Key set karein.
+- `/aisettings seturl <base_url>` — Provider badlein (jaise Groq: `https://api.groq.com/openai/v1` ya OpenRouter: `https://openrouter.ai/api/v1`).
+- `/aisettings setmodel <model_name>` — Model name badlein (jaise `llama-3.3-70b-versatile`, `gpt-4o-mini`, `deepseek-chat`).

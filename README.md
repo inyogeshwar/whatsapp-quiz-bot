@@ -40,6 +40,8 @@ An automated, ultra-fast WhatsApp MCQ Quiz Bot designed specifically for WhatsAp
 - **📱 Dual Authentication Modes:**
   - **QR Code Scan:** Directly scan in the terminal.
   - **8-Digit Pairing Code:** Connect by entering an 8-character code in WhatsApp without scanning a screen.
+- **🤖 OpenAI-Compatible AI Chatbot:** Connect any AI provider (OpenAI, OpenRouter, Groq, DeepSeek) to answer questions with `/ai <prompt>`.
+- **⚡ AI Live Quiz Generator:** Generate fresh MCQs on any custom topic on the fly with `/aiquiz <topic> [count]`.
 - **🛑 Safe Interrupts:** Stop active quizzes anytime with `/stop` without losing recorded points.
 
 > 📖 **Want to learn how each feature works behind the scenes? Read the comprehensive [FEATURES.md](FEATURES.md) guide.**
@@ -165,6 +167,9 @@ Commands can be triggered in groups using **`/`** (or `!`):
 | `/channel stop` | Stops channel auto-posting | `/channel stop` |
 | `/channel grouplink [link]`| Sets group invite link for channel cross-promotion | `/channel grouplink https://...` |
 | `/addq` | Adds a new MCQ directly from chat | `/addq Q? \| O1, O2, O3, O4 \| 1 \| GK` |
+| `/ai [prompt]` | Ask AI any question (ChatGPT/Claude/Groq) | `/ai What is quantum computing?` |
+| `/aiquiz [topic] [n]`| Generate live fresh MCQs on any topic | `/aiquiz Cricket 5` |
+| `/aisettings` | Configure AI API Key, Base URL & Model | `/aisettings` |
 | `/categories` | Shows all available question topics in database | `/categories` |
 | `/help` | Displays the help menu with all commands | `/help` |
 

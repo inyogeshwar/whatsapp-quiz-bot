@@ -16,6 +16,7 @@ import {
   startChannelAutoPost,
   stopChannelAutoPost
 } from './channelEngine.js';
+import { askAI, generateMCQWithAI, getAIConfig } from './aiEngine.js';
 
 export async function handleIncomingMessage(sock, msg) {
   try {
@@ -347,6 +348,118 @@ export async function handleIncomingMessage(sock, msg) {
         break;
       }
 
+      case 'ai':
+      case 'gpt':
+      case 'ask': {
+        const prompt = args.join(' ').trim();
+        if (!prompt) {
+          await sock.sendMessage(remoteJid, {
+            text: `🤖 *AI Chatbot*\n\nPoochhiye koi bhi sawaal:\n👉 *${CONFIG.PREFIX}ai Bharat ka sabse bada rajya kaunsa hai?*\n👉 *${CONFIG.PREFIX}ai Write a python function for fibonacci*`
+          });
+          return;
+        }
+
+        try {
+          const reply = await askAI(prompt);
+          await sock.sendMessage(remoteJid, {
+            text: `🤖 *AI Assistant:*\n\n${reply}`
+          });
+        } catch (err) {
+          await sock.sendMessage(remoteJid, {
+            text: `❌ ${err.message}`
+          });
+        }
+        break;
+      }
+
+      case 'aiquiz': {
+        if (!isGroup) {
+          await sock.sendMessage(remoteJid, { text: `⚠️ Quiz sirf WhatsApp Groups me kaam karta hai!` });
+          return;
+        }
+
+        const lastArg = args[args.length - 1];
+        const hasCount = args.length > 1 && !isNaN(parseInt(lastArg));
+        const count = hasCount ? parseInt(lastArg) : 3;
+        const topic = (hasCount ? args.slice(0, -1) : args).join(' ').trim() || 'General Knowledge';
+
+        await sock.sendMessage(remoteJid, {
+          text: `🤖 *AI Quiz Generator:* Generating ${count} fresh questions on "*${topic}*"... ⏳`
+        });
+
+        try {
+          const aiQuestions = await generateMCQWithAI(topic, count);
+          await sock.sendMessage(remoteJid, {
+            text: `✅ Generated ${aiQuestions.length} MCQs! Starting quiz round now... 🚀`
+          });
+          await startQuiz(sock, remoteJid, aiQuestions.length, null, false, aiQuestions);
+        } catch (err) {
+          await sock.sendMessage(remoteJid, {
+            text: `❌ AI Question generation failed: ${err.message}`
+          });
+        }
+        break;
+      }
+
+      case 'aisettings': {
+        const sub = (args[0] || '').toLowerCase();
+
+        if (sub === 'setkey') {
+          const key = args[1];
+          if (!key) {
+            await sock.sendMessage(remoteJid, { text: `⚠️ *Usage:* /aisettings setkey <your_api_key>` });
+            return;
+          }
+          setBotSetting('ai_api_key', key.trim());
+          await sock.sendMessage(remoteJid, { text: `✅ *AI API Key Saved Successfully!* 🔐` });
+          return;
+        }
+
+        if (sub === 'seturl') {
+          const url = args[1];
+          if (!url) {
+            await sock.sendMessage(remoteJid, {
+              text: `⚠️ *Usage:* /aisettings seturl <base_url>\n*Examples:*\n• Groq: https://api.groq.com/openai/v1\n• OpenRouter: https://openrouter.ai/api/v1\n• DeepSeek: https://api.deepseek.com/v1\n• OpenAI: https://api.openai.com/v1`
+            });
+            return;
+          }
+          setBotSetting('ai_base_url', url.trim());
+          await sock.sendMessage(remoteJid, { text: `✅ *AI Base URL Set To:* ${url}` });
+          return;
+        }
+
+        if (sub === 'setmodel') {
+          const model = args[1];
+          if (!model) {
+            await sock.sendMessage(remoteJid, {
+              text: `⚠️ *Usage:* /aisettings setmodel <model_name>\n*Examples:*\n• gpt-4o-mini\n• deepseek-chat\n• llama-3.3-70b-versatile`
+            });
+            return;
+          }
+          setBotSetting('ai_model', model.trim());
+          await sock.sendMessage(remoteJid, { text: `✅ *AI Model Set To:* ${model}` });
+          return;
+        }
+
+        // Show status
+        const { baseUrl, apiKey, model } = getAIConfig();
+        const maskedKey = apiKey ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}` : '❌ Not Set';
+
+        await sock.sendMessage(remoteJid, {
+          text: `⚙️ *AI CONFIGURATION SETTINGS* ⚙️\n━━━━━━━━━━━━━━━━━━━━\n` +
+                `🌐 *Base URL:* ${baseUrl}\n` +
+                `🤖 *Model:* ${model}\n` +
+                `🔑 *API Key:* ${maskedKey}\n\n` +
+                `*Commands:*\n` +
+                `🔹 */ai <prompt>* — Ask AI any question\n` +
+                `🔹 */aiquiz <topic> [count]* — Auto-generate live quiz\n` +
+                `🔹 */aisettings setkey <key>* — Set API key\n` +
+                `🔹 */aisettings seturl <url>* — Set Base URL (Groq, OpenRouter, etc.)\n` +
+                `🔹 */aisettings setmodel <model>* — Set Model name`
+        });
+        break;
+      }
+
       case 'categories':
       case 'category': {
         const questions = loadQuestions();
@@ -367,15 +480,17 @@ export async function handleIncomingMessage(sock, msg) {
         const helpText = `🧠 *${CONFIG.BOT_NAME}* 🧠\n━━━━━━━━━━━━━━━━━━━━\n` +
                          `*Quiz Commands:*\n` +
                          `🔹 */quiz* — Start a 5-question quiz\n` +
-                         `🔹 */quiz [count]* — Start quiz with specific count (e.g. */quiz 50*, */quiz all*)\n` +
+                         `🔹 */quiz [count]* — Start quiz (e.g. */quiz 50*, */quiz all*)\n` +
                          `🔹 */quiz [count] @all* — Start quiz & notify all members\n` +
-                         `🔹 */stop* ya */stopquiz* — Stop the active quiz anytime\n\n` +
-                         `*Group & Mentions:*\n` +
-                         `🔹 */tagall [msg]* ya */everyone* — Mention all group members\n\n` +
+                         `🔹 */aiquiz [topic] [count]* — AI se fresh live quiz banwayein\n` +
+                         `🔹 */stop* — Stop active quiz\n\n` +
+                         `*AI Chatbot:*\n` +
+                         `🔹 */ai [question]* — Ask AI anything (ChatGPT/Claude/Groq)\n` +
+                         `🔹 */aisettings* — Configure API Key, Base URL & Model\n\n` +
                          `*Stats & Leaderboard:*\n` +
                          `🔹 */top* ya */leaderboard* — Top 10 players\n` +
                          `🔹 */rank* — Your score & accuracy\n` +
-                         `🔹 */categories* — List question topics\n` +
+                         `🔹 */tagall* — Mention all members\n` +
                          `━━━━━━━━━━━━━━━━━━━━\n` +
                          `💡 *Tip:* Question Poll me option tap karein, ya text reply (1, 2, 3, 4) bhejein!`;
 
