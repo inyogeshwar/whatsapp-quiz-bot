@@ -1,0 +1,24 @@
+{
+  "name": "whatsapp-quiz-bot",
+  "version": "1.0.0",
+  "description": "WhatsApp Group MCQ Quiz Bot with Leaderboard using Baileys",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "whatsapp",
+    "baileys",
+    "quiz",
+    "mcq",
+    "leaderboard"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^7.0.0-rc.14",
+    "pino": "^10.1.0",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
