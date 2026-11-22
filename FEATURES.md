@@ -15,6 +15,10 @@ Is document me WhatsApp Group & Channel MCQ Quiz Bot ke har ek feature ka detail
 8. [Complete Commands Cheat Sheet](#8-complete-commands-cheat-sheet)
 9. [Web Pairing Dashboard & 24/7 Cloud Anti-Sleep](#9-web-pairing-dashboard--247-cloud-anti-sleep)
 10. [OpenAI-Compatible AI Chatbot & Live AI Quiz Generator](#10-openai-compatible-ai-chatbot--live-ai-quiz-generator)
+11. [Free Zero-Key AI Fallback & Custom Persona](#11-free-zero-key-ai-fallback--custom-persona)
+12. [Free AI Image Generator (/image)](#12-free-ai-image-generator-image)
+13. [Group Auto-Moderation & Bad Words Filter (/warn, /automod)](#13-group-auto-moderation--bad-words-filter)
+14. [Reactions, Animated GIFs & Latency Benchmark (/ping)](#14-reactions-animated-gifs--latency-benchmark)
 
 ---
 
@@ -148,7 +152,15 @@ Aapko kisi JSON file ya code ko edit karne ki zaroorat nahi hai. Admin chat me h
 | **/categories** | Available chapters aur total questions dekhein | `/categories` |
 | **/ai [prompt]** | AI Chatbot se koi bhi sawaal poochhein | `/ai What is black hole?` |
 | **/aiquiz [topic] [n]**| AI se live fresh MCQs banwake quiz start karein | `/aiquiz Cricket 5` |
-| **/aisettings** | AI API Key, Base URL aur Model configure karein | `/aisettings` |
+| **/image [prompt]** | Free me high-res AI image generate karein | `/image neon cyberpunk cat 4k` |
+| **/aisettings** | AI API Key, Base URL, Model aur Prompt configure karein | `/aisettings` |
+| **/ping** / **/speed** | Bot ka latency ping, uptime aur RAM usage check karein | `/ping` |
+| **/react [emoji]** | Kisi message par emoji reaction dein | `/react ❤️` |
+| **/gif [caption]** | High-energy celebration animated GIF bhejein | `/gif Winner! 🎉` |
+| **/automod on/off** | Abusive words auto-warning enable/disable karein | `/automod on` |
+| **/warn @user [reason]**| User ko warning issue karein (3 warnings limit) | `/warn @user abusive words` |
+| **/resetwarn @user** | User ki warnings 0 karein | `/resetwarn @user` |
+| **/warnings** | User ki active warnings count dekhein | `/warnings` |
 | **/help** | Sabhi commands ka quick menu dekhein | `/help` |
 
 ---
@@ -162,7 +174,7 @@ Bot ke sath ek built-in Express Web Dashboard chalta hai:
   1. **Dark Neon Web UI:** Mobile aur Desktop dono par responsive clean design.
   2. **Phone Number Input:** Country code ke sath phone number dalein (e.g., `919876543210`).
   3. **Instant 8-Digit Pairing Code:** Live WhatsApp pairing code generate karta hai with 1-click **Copy Code** button.
-  4. **Live Status Indicator:** Real-time dikhata hai ki bot Online hai ya connection ka wait kar raha hai.
+  4. **Live Status Indicator & Privacy Shield:** Jab bot online connect ho jata hai toh dashboard secure lock ho jata hai aur phone number public view se hide rehta hai.
 
 ### 24/7 Render Cloud Anti-Sleep (Cron-Job Setup):
 Render free tier 15 minute ke baad sleep ho jata hai. Isko 24/7 active rakhne ke do tareeqe hain:
@@ -178,7 +190,7 @@ Bot me kisi bhi **OpenAI-Compatible AI Provider** ko connect kiya ja sakta hai (
 ### 1. AI Se Chat Karna:
 - **Command:** `/ai <question>` ya `/gpt <question>`
 - **Example:** `/ai Photo editing ke liye best software kaunsa hai?`
-- Bot group me AI ka clean formatted answer post karega.
+- Bot group me AI ka clean formatted answer post karega with instant `⏳` and `✅` reactions.
 
 ### 2. Live AI Quiz Generator (/aiquiz):
 Agar aapko database ke bahar kisi naye topic par quiz chalana hai, toh AI turant naye MCQs banayega:
@@ -190,7 +202,47 @@ Agar aapko database ke bahar kisi naye topic par quiz chalana hai, toh AI turant
 👉 AI turant 4 options aur correct answer ke sath fresh MCQs generate karega aur group me **Single-Choice Poll round live start** kar dega!
 
 ### 3. AI Settings Configuration (/aisettings):
-Admin WhatsApp chat se hi API key aur model badal sakta hai:
+Admin WhatsApp chat se hi settings badal sakta hai:
 - `/aisettings setkey <your_api_key>` — API Key set karein.
-- `/aisettings seturl <base_url>` — Provider badlein (jaise Groq: `https://api.groq.com/openai/v1` ya OpenRouter: `https://openrouter.ai/api/v1`).
-- `/aisettings setmodel <model_name>` — Model name badlein (jaise `llama-3.3-70b-versatile`, `gpt-4o-mini`, `deepseek-chat`).
+- `/aisettings seturl <base_url>` — Provider badlein (jaise Groq: `https://api.groq.com/openai/v1`).
+- `/aisettings setmodel <model_name>` — Model name badlein (jaise `llama-3.3-70b-versatile`, `gpt-4o-mini`).
+- `/aisettings setprompt <instruction>` — Custom persona ya instructions set karein.
+- `/aisettings resetprompt` — Default persona par reset karein.
+
+---
+
+## 11. Free Zero-Key AI Fallback & Custom Persona
+
+Agar aapke paas koi paid API key nahi hai ya aap Groq/OpenAI setup nahi karna chahte, toh bot me **Free Zero-Key AI Engine** integrated hai:
+- **Automatic Fallback:** Jab koi API key set nahi hoti, bot automatically bina kisi key ke **Pollinations AI / FreeLLMAPI** se answers fetch karta hai.
+- **Custom System Instructions:** `/aisettings setprompt You are a polite educational assistant.` se bot ke AI persona ko apne group ke hisab se tailor kar sakte hain.
+
+---
+
+## 12. Free AI Image Generator (/image)
+
+Text prompt likh kar high-quality AI images generate karein:
+- **Command:** `/image <prompt>` ya `/imagine <prompt>`
+- **Example:** `/image a cute astronaut dog on mars 4k realistic`
+- Bot processing ke waqt `🎨` reaction dega aur WhatsApp par direct high-res image reply karega!
+
+---
+
+## 13. Group Auto-Moderation & Bad Words Filter
+
+WhatsApp groups me shanti aur decorum maintain karne ke liye advanced moderation engine:
+- **Auto-Filter:** Hindi aur English abusive slurs par bot automatically message delete/warn karta hai.
+- **Warning System (Max 3):** User ko `⚠️ [1/3] Warning` issue hoti hai. 3 warnings cross karne par group admins ko action lene ka alert milta hai.
+- **Commands:**
+  - `/automod on` ya `/automod off` — Auto-moderation toggle karein.
+  - `/warn @user [reason]` — Admin dwara kisi member ko manual warning dena.
+  - `/resetwarn @user` — Warnings reset karna.
+  - `/warnings` — Member ki current warnings count check karna.
+
+---
+
+## 14. Reactions, Animated GIFs & Latency Benchmark (/ping)
+
+- **Emoji Reactions:** `/react <emoji>` se kisi bhi message par WhatsApp emoji reaction lagayein (e.g. `/react 🔥`).
+- **Celebration GIFs:** `/gif <caption?>` se high-energy animated celebration video GIFs share karein (`gifPlayback: true`).
+- **Ping & Performance:** `/ping` command se bot ka live response latency (ms), uptime aur RAM usage monitor karein.

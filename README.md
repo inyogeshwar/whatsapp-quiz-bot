@@ -40,8 +40,11 @@ An automated, ultra-fast WhatsApp MCQ Quiz Bot designed specifically for WhatsAp
 - **📱 Dual Authentication Modes:**
   - **QR Code Scan:** Directly scan in the terminal.
   - **8-Digit Pairing Code:** Connect by entering an 8-character code in WhatsApp without scanning a screen.
-- **🤖 OpenAI-Compatible AI Chatbot:** Connect any AI provider (OpenAI, OpenRouter, Groq, DeepSeek) to answer questions with `/ai <prompt>`.
+- **🤖 OpenAI-Compatible AI Chatbot:** Connect any AI provider (OpenAI, OpenRouter, Groq, DeepSeek) to answer questions with `/ai <prompt>`. Zero-key free engine included!
+- **🎨 Free AI Image Generation:** Generate high-resolution AI art on the fly with `/image <prompt>`.
 - **⚡ AI Live Quiz Generator:** Generate fresh MCQs on any custom topic on the fly with `/aiquiz <topic> [count]`.
+- **🛡️ Group Auto-Moderation:** Automatically detects slurs and abusive language in Hindi/English, warns users (3 warnings limit), with `/automod`, `/warn`, `/resetwarn`, and `/warnings`.
+- **⚡ Reactions & Animated GIFs:** Send emoji reactions (`/react`), celebration animated GIFs (`/gif`), and benchmark latency (`/ping`).
 - **🛑 Safe Interrupts:** Stop active quizzes anytime with `/stop` without losing recorded points.
 
 > 📖 **Want to learn how each feature works behind the scenes? Read the comprehensive [FEATURES.md](FEATURES.md) guide.**
@@ -167,9 +170,17 @@ Commands can be triggered in groups using **`/`** (or `!`):
 | `/channel stop` | Stops channel auto-posting | `/channel stop` |
 | `/channel grouplink [link]`| Sets group invite link for channel cross-promotion | `/channel grouplink https://...` |
 | `/addq` | Adds a new MCQ directly from chat | `/addq Q? \| O1, O2, O3, O4 \| 1 \| GK` |
-| `/ai [prompt]` | Ask AI any question (ChatGPT/Claude/Groq) | `/ai What is quantum computing?` |
+| `/ai [prompt]` | Ask AI any question (ChatGPT/Claude/Groq/Free) | `/ai What is quantum computing?` |
 | `/aiquiz [topic] [n]`| Generate live fresh MCQs on any topic | `/aiquiz Cricket 5` |
-| `/aisettings` | Configure AI API Key, Base URL & Model | `/aisettings` |
+| `/image [prompt]` | Generate free AI images from text prompt | `/image cute cat astronaut 4k` |
+| `/aisettings` | Configure AI Key, Base URL, Model & Persona | `/aisettings` |
+| `/ping` / `/speed` | Benchmark bot latency, uptime & memory | `/ping` |
+| `/react [emoji]` | React to message with emoji | `/react 🔥` |
+| `/gif [caption]` | Send high-energy animated celebration GIF | `/gif Great job! 🎉` |
+| `/automod [on/off]` | Toggle auto-warning on abusive slurs | `/automod on` |
+| `/warn @user [reason]`| Issue warning to group member | `/warn @user breaking rules` |
+| `/resetwarn @user` | Clear member warnings | `/resetwarn @user` |
+| `/warnings` | Check active warning status | `/warnings` |
 | `/categories` | Shows all available question topics in database | `/categories` |
 | `/help` | Displays the help menu with all commands | `/help` |
 

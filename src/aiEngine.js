@@ -4,6 +4,9 @@ import { getBotSetting, setBotSetting } from './database.js';
 const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
 const DEFAULT_MODEL = 'gpt-4o-mini';
 
+// Free zero-key AI endpoint
+const FREE_AI_BASE_URL = 'https://text.pollinations.ai/openai';
+
 /**
  * Gets the current AI configuration from DB or environment variables
  */
@@ -11,34 +14,39 @@ export function getAIConfig() {
   const baseUrl = (getBotSetting('ai_base_url') || process.env.AI_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, '');
   const apiKey = getBotSetting('ai_api_key') || process.env.AI_API_KEY || '';
   const model = getBotSetting('ai_model') || process.env.AI_MODEL || DEFAULT_MODEL;
+  const customPrompt = getBotSetting('ai_system_prompt') || 'You are a smart, helpful, and concise AI assistant in a WhatsApp group. Answer accurately in the same language as the user (Hindi, English, or Hinglish). Keep formatting clean with WhatsApp bold/bullet points.';
 
-  return { baseUrl, apiKey, model };
+  return { baseUrl, apiKey, model, customPrompt };
 }
 
 /**
  * Sends a chat completion prompt to any OpenAI-compatible API
- * (OpenAI, OpenRouter, Groq, DeepSeek, Together, Ollama, etc.)
+ * If no API key is provided, falls back to free AI engine automatically!
  * @param {string} prompt - User message/question
- * @param {string} systemPrompt - Optional system instruction
+ * @param {string} customSystemPrompt - Optional override
  * @returns {Promise<string>}
  */
-export async function askAI(prompt, systemPrompt = 'You are a smart, helpful, and concise AI assistant in a WhatsApp group. Answer accurately in the same language as the user (Hindi, English, or Hinglish). Keep formatting clean with WhatsApp bold/bullet points.') {
-  const { baseUrl, apiKey, model } = getAIConfig();
+export async function askAI(prompt, customSystemPrompt = null) {
+  const config = getAIConfig();
+  const systemPrompt = customSystemPrompt || config.customPrompt;
 
-  if (!apiKey) {
-    throw new Error('AI API Key set nahi hai!\nSet karein: */aisettings setkey <your_api_key>*\nYa Render par *AI_API_KEY* environment variable add karein.');
+  // If no API key is configured, use free zero-key AI
+  let endpoint = `${config.baseUrl}/chat/completions`;
+  let headers = { 'Content-Type': 'application/json' };
+  let modelToUse = config.model;
+
+  if (!config.apiKey) {
+    endpoint = `${FREE_AI_BASE_URL}/chat/completions`;
+    modelToUse = 'openai';
+  } else {
+    headers['Authorization'] = `Bearer ${config.apiKey}`;
   }
-
-  const endpoint = `${baseUrl}/chat/completions`;
 
   const response = await fetch(endpoint, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
+    headers,
     body: JSON.stringify({
-      model,
+      model: modelToUse,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: prompt }
@@ -50,7 +58,7 @@ export async function askAI(prompt, systemPrompt = 'You are a smart, helpful, an
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`AI API Error (${response.status}): ${errorText.slice(0, 150)}`);
+    throw new Error(`AI Provider Error (${response.status}): ${errorText.slice(0, 150)}`);
   }
 
   const data = await response.json();
@@ -61,6 +69,17 @@ export async function askAI(prompt, systemPrompt = 'You are a smart, helpful, an
   }
 
   return reply;
+}
+
+/**
+ * Generates high-quality AI images for free using text prompt
+ * @param {string} prompt - Image description
+ * @returns {string} Image URL
+ */
+export function generateAIImageUrl(prompt) {
+  const cleanPrompt = encodeURIComponent(prompt.trim());
+  const seed = Math.floor(Math.random() * 1000000);
+  return `https://image.pollinations.ai/prompt/${cleanPrompt}?width=1024&height=1024&seed=${seed}&nologo=true`;
 }
 
 /**
@@ -77,7 +96,7 @@ Format for each item in the array:
 {
   "question": "Question text here?",
   "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-  "answerIndex": 0, // integer 0 to 3 indicating the correct option
+  "answerIndex": 0,
   "correctAnswer": "Option 1",
   "explanation": "Brief 1-sentence explanation"
 }`;

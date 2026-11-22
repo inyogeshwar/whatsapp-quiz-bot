@@ -5,6 +5,11 @@ import { CONFIG } from './config.js';
 
 let db = null;
 
+export function getDb() {
+  if (!db) initDatabase();
+  return db;
+}
+
 export function initDatabase() {
   const dbDir = path.dirname(CONFIG.DB_PATH);
   if (!fs.existsSync(dbDir)) {

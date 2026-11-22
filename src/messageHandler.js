@@ -7,7 +7,8 @@ import {
   resetGroupLeaderboard,
   getPlayerTier,
   getBotSetting,
-  setBotSetting
+  setBotSetting,
+  getDb
 } from './database.js';
 import { startQuiz, stopQuiz, handleTextAnswer, loadQuestions } from './quizEngine.js';
 import {
@@ -16,7 +17,9 @@ import {
   startChannelAutoPost,
   stopChannelAutoPost
 } from './channelEngine.js';
-import { askAI, generateMCQWithAI, getAIConfig } from './aiEngine.js';
+import { askAI, generateMCQWithAI, getAIConfig, generateAIImageUrl } from './aiEngine.js';
+import { checkExplicitContent, recordWarning, resetWarning, getWarningCount } from './moderation.js';
+import { sendReaction, getRandomCelebrationGif } from './reactionHelper.js';
 
 export async function handleIncomingMessage(sock, msg) {
   try {
@@ -37,6 +40,26 @@ export async function handleIncomingMessage(sock, msg) {
 
     const text = messageContent.trim();
     if (!text) return;
+
+    // Auto-Moderation: Check explicit / abusive content
+    if (isGroup && getBotSetting('automod') !== '0') {
+      const badWord = checkExplicitContent(text);
+      if (badWord) {
+        await sendReaction(sock, msg.key, '⚠️');
+        const db = getDb();
+        const count = recordWarning(db, remoteJid, cleanSender, `Used explicit term`);
+        let warnMsg = `⚠️ @${cleanSender.split('@')[0]} *WARNING [${count}/3]*\n` +
+                      `Group me gaali ya abusive bhasha use karna mana hai! Please decorum maintain karein.`;
+        if (count >= 3) {
+          warnMsg += `\n🚨 *Aapne maximum 3 warnings cross kar li hain!* Group Admins take note.`;
+        }
+        await sock.sendMessage(remoteJid, {
+          text: warnMsg,
+          mentions: [cleanSender]
+        });
+        return;
+      }
+    }
 
     const prefixes = CONFIG.SUPPORTED_PREFIXES || [CONFIG.PREFIX, '!'];
     const usedPrefix = prefixes.find(p => text.startsWith(p));
@@ -360,11 +383,14 @@ export async function handleIncomingMessage(sock, msg) {
         }
 
         try {
+          await sendReaction(sock, msg.key, '⏳');
           const reply = await askAI(prompt);
           await sock.sendMessage(remoteJid, {
             text: `🤖 *AI Assistant:*\n\n${reply}`
           });
+          await sendReaction(sock, msg.key, '✅');
         } catch (err) {
+          await sendReaction(sock, msg.key, '❌');
           await sock.sendMessage(remoteJid, {
             text: `❌ ${err.message}`
           });
@@ -441,22 +467,215 @@ export async function handleIncomingMessage(sock, msg) {
           return;
         }
 
+        if (sub === 'setprompt' || sub === 'systemprompt') {
+          const customPrompt = args.slice(1).join(' ').trim();
+          if (!customPrompt) {
+            await sock.sendMessage(remoteJid, {
+              text: `⚠️ *Usage:* /aisettings setprompt <custom_instruction>\n*Example:* /aisettings setprompt You are a knowledgeable Hinglish quiz host with good humor.`
+            });
+            return;
+          }
+          setBotSetting('ai_system_prompt', customPrompt);
+          await sock.sendMessage(remoteJid, { text: `✅ *AI Custom System Instruction Saved!* 📝` });
+          return;
+        }
+
+        if (sub === 'resetprompt') {
+          setBotSetting('ai_system_prompt', '');
+          await sock.sendMessage(remoteJid, { text: `✅ *AI System Instruction reset to default!*` });
+          return;
+        }
+
         // Show status
-        const { baseUrl, apiKey, model } = getAIConfig();
-        const maskedKey = apiKey ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}` : '❌ Not Set';
+        const { baseUrl, apiKey, model, customPrompt } = getAIConfig();
+        const maskedKey = apiKey ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}` : '❌ Free Engine (Pollinations)';
 
         await sock.sendMessage(remoteJid, {
           text: `⚙️ *AI CONFIGURATION SETTINGS* ⚙️\n━━━━━━━━━━━━━━━━━━━━\n` +
                 `🌐 *Base URL:* ${baseUrl}\n` +
                 `🤖 *Model:* ${model}\n` +
-                `🔑 *API Key:* ${maskedKey}\n\n` +
+                `🔑 *API Key:* ${maskedKey}\n` +
+                `📝 *Custom Instruction:* ${customPrompt ? (customPrompt.length > 60 ? customPrompt.slice(0, 60) + '...' : customPrompt) : 'Default'}\n\n` +
                 `*Commands:*\n` +
                 `🔹 */ai <prompt>* — Ask AI any question\n` +
                 `🔹 */aiquiz <topic> [count]* — Auto-generate live quiz\n` +
-                `🔹 */aisettings setkey <key>* — Set API key\n` +
+                `🔹 */aisettings setkey <key>* — Set custom API key\n` +
                 `🔹 */aisettings seturl <url>* — Set Base URL (Groq, OpenRouter, etc.)\n` +
-                `🔹 */aisettings setmodel <model>* — Set Model name`
+                `🔹 */aisettings setmodel <model>* — Set Model name\n` +
+                `🔹 */aisettings setprompt <instruction>* — Set custom persona\n` +
+                `🔹 */aisettings resetprompt* — Reset system prompt`
         });
+        break;
+      }
+
+      case 'ping':
+      case 'speed': {
+        const start = Date.now();
+        await sendReaction(sock, msg.key, '🏓');
+        const latency = Date.now() - start;
+        const uptimeSec = process.uptime();
+        const hours = Math.floor(uptimeSec / 3600);
+        const mins = Math.floor((uptimeSec % 3600) / 60);
+        const secs = Math.floor(uptimeSec % 60);
+        const mem = (process.memoryUsage().rss / 1024 / 1024).toFixed(1);
+
+        await sock.sendMessage(remoteJid, {
+          text: `🏓 *PONG!* ⚡\n━━━━━━━━━━━━━━━━━━━━\n` +
+                `📶 *Latency:* ${latency}ms\n` +
+                `⏱️ *Uptime:* ${hours}h ${mins}m ${secs}s\n` +
+                `💾 *RAM Usage:* ${mem} MB\n` +
+                `🚀 *Status:* Active & Online`
+        });
+        break;
+      }
+
+      case 'react': {
+        const emoji = args[0] || '❤️';
+        const contextInfo = msg.message?.extendedTextMessage?.contextInfo;
+        const targetKey = contextInfo?.stanzaId
+          ? {
+              remoteJid,
+              fromMe: contextInfo.participant === sock.user?.id?.replace(/:.*@/, '@'),
+              id: contextInfo.stanzaId,
+              participant: contextInfo.participant
+            }
+          : msg.key;
+
+        await sendReaction(sock, targetKey, emoji);
+        break;
+      }
+
+      case 'image':
+      case 'imagine':
+      case 'aiimage': {
+        const prompt = args.join(' ').trim();
+        if (!prompt) {
+          await sock.sendMessage(remoteJid, {
+            text: `🎨 *AI Image Generator*\n\nUsage:\n👉 *${CONFIG.PREFIX}image a cute cyberpunk cat in neon tokyo*\n👉 *${CONFIG.PREFIX}imagine futuristic sports car in mountains 4k*`
+          });
+          return;
+        }
+
+        await sendReaction(sock, msg.key, '🎨');
+        await sock.sendMessage(remoteJid, {
+          text: `🎨 *Generating AI Image for:* "${prompt}"... ⏳`
+        });
+
+        try {
+          const imageUrl = generateAIImageUrl(prompt);
+          await sock.sendMessage(remoteJid, {
+            image: { url: imageUrl },
+            caption: `✨ *AI Generated Art*\n💭 *Prompt:* ${prompt}\n⚡ *Powered by Pollinations AI*`
+          });
+          await sendReaction(sock, msg.key, '✅');
+        } catch (err) {
+          await sendReaction(sock, msg.key, '❌');
+          await sock.sendMessage(remoteJid, {
+            text: `❌ Image generation failed: ${err.message}`
+          });
+        }
+        break;
+      }
+
+      case 'gif': {
+        const caption = args.join(' ').trim() || '🎉 Celebration!';
+        const gifUrl = getRandomCelebrationGif();
+        try {
+          await sock.sendMessage(remoteJid, {
+            video: { url: gifUrl },
+            gifPlayback: true,
+            caption: `🎬 ${caption}`
+          });
+        } catch (err) {
+          await sock.sendMessage(remoteJid, { text: `🎬 ${caption}\n${gifUrl}` });
+        }
+        break;
+      }
+
+      case 'warn': {
+        if (!isGroup) {
+          await sock.sendMessage(remoteJid, { text: `⚠️ Ye command sirf Groups me kaam karta hai!` });
+          return;
+        }
+        const contextInfo = msg.message?.extendedTextMessage?.contextInfo;
+        const mentioned = contextInfo?.mentionedJid?.[0] || contextInfo?.participant;
+        if (!mentioned) {
+          await sock.sendMessage(remoteJid, { text: `⚠️ Kisi user ko mention karein ya uske message ka reply karke *${CONFIG.PREFIX}warn* likhein!` });
+          return;
+        }
+        const reason = args.filter(a => !a.startsWith('@')).join(' ').trim() || 'Rule violation';
+        const cleanTarget = mentioned.replace(/:.*@/, '@');
+        const db = getDb();
+        const count = recordWarning(db, remoteJid, cleanTarget, reason);
+        let warnText = `⚠️ @${cleanTarget.split('@')[0]} *WARNING [${count}/3]*\n📌 *Reason:* ${reason}`;
+        if (count >= 3) {
+          warnText += `\n🚨 *User has reached 3 warnings!* Group Admins take note.`;
+        }
+        await sock.sendMessage(remoteJid, {
+          text: warnText,
+          mentions: [cleanTarget]
+        });
+        break;
+      }
+
+      case 'resetwarn':
+      case 'unwarn': {
+        if (!isGroup) {
+          await sock.sendMessage(remoteJid, { text: `⚠️ Ye command sirf Groups me kaam karta hai!` });
+          return;
+        }
+        const contextInfo = msg.message?.extendedTextMessage?.contextInfo;
+        const mentioned = contextInfo?.mentionedJid?.[0] || contextInfo?.participant;
+        if (!mentioned) {
+          await sock.sendMessage(remoteJid, { text: `⚠️ Kisi user ko mention karein ya reply karein: *${CONFIG.PREFIX}resetwarn @user*` });
+          return;
+        }
+        const cleanTarget = mentioned.replace(/:.*@/, '@');
+        const db = getDb();
+        resetWarning(db, remoteJid, cleanTarget);
+        await sock.sendMessage(remoteJid, {
+          text: `✅ Warnings reset to 0 for @${cleanTarget.split('@')[0]}!`,
+          mentions: [cleanTarget]
+        });
+        break;
+      }
+
+      case 'warnings':
+      case 'warns': {
+        if (!isGroup) {
+          await sock.sendMessage(remoteJid, { text: `⚠️ Ye command sirf Groups me kaam karta hai!` });
+          return;
+        }
+        const contextInfo = msg.message?.extendedTextMessage?.contextInfo;
+        const target = contextInfo?.mentionedJid?.[0] || contextInfo?.participant || cleanSender;
+        const cleanTarget = target.replace(/:.*@/, '@');
+        const db = getDb();
+        const count = getWarningCount(db, remoteJid, cleanTarget);
+        await sock.sendMessage(remoteJid, {
+          text: `⚠️ *Warning Status for @${cleanTarget.split('@')[0]}:* ${count}/3 warnings`,
+          mentions: [cleanTarget]
+        });
+        break;
+      }
+
+      case 'automod': {
+        if (!isGroup) {
+          await sock.sendMessage(remoteJid, { text: `⚠️ Ye command sirf Groups me kaam karta hai!` });
+          return;
+        }
+        const status = (args[0] || '').toLowerCase();
+        if (status === 'on' || status === 'enable' || status === '1') {
+          setBotSetting('automod', '1');
+          await sock.sendMessage(remoteJid, { text: `🛡️ *Auto-Moderation ENABLED!*\nAb abusive words par automatic warning di jayegi.` });
+        } else if (status === 'off' || status === 'disable' || status === '0') {
+          setBotSetting('automod', '0');
+          await sock.sendMessage(remoteJid, { text: `⚠️ *Auto-Moderation DISABLED.*` });
+        } else {
+          const current = getBotSetting('automod') !== '0' ? 'ON' : 'OFF';
+          await sock.sendMessage(remoteJid, {
+            text: `🛡️ *Auto-Moderation Status:* ${current}\n\n👉 Type *${CONFIG.PREFIX}automod on* ya *${CONFIG.PREFIX}automod off*`
+          });
+        }
         break;
       }
 
@@ -478,21 +697,36 @@ export async function handleIncomingMessage(sock, msg) {
       case 'help':
       case 'menu': {
         const helpText = `🧠 *${CONFIG.BOT_NAME}* 🧠\n━━━━━━━━━━━━━━━━━━━━\n` +
-                         `*Quiz Commands:*\n` +
-                         `🔹 */quiz* — Start a 5-question quiz\n` +
-                         `🔹 */quiz [count]* — Start quiz (e.g. */quiz 50*, */quiz all*)\n` +
-                         `🔹 */quiz [count] @all* — Start quiz & notify all members\n` +
-                         `🔹 */aiquiz [topic] [count]* — AI se fresh live quiz banwayein\n` +
-                         `🔹 */stop* — Stop active quiz\n\n` +
-                         `*AI Chatbot:*\n` +
-                         `🔹 */ai [question]* — Ask AI anything (ChatGPT/Claude/Groq)\n` +
-                         `🔹 */aisettings* — Configure API Key, Base URL & Model\n\n` +
-                         `*Stats & Leaderboard:*\n` +
-                         `🔹 */top* ya */leaderboard* — Top 10 players\n` +
-                         `🔹 */rank* — Your score & accuracy\n` +
-                         `🔹 */tagall* — Mention all members\n` +
+                         `*🎯 Quiz Commands:*\n` +
+                         `🔹 */quiz* — 5-question quick quiz\n` +
+                         `🔹 */quiz [count]* — Custom length (e.g. */quiz 20*, */quiz all*)\n` +
+                         `🔹 */quiz [count] @all* — Start quiz & mention everyone\n` +
+                         `🔹 */aiquiz [topic] [count]* — AI generates live fresh MCQs\n` +
+                         `🔹 */categories* — View available quiz topics\n` +
+                         `🔹 */stop* — End running quiz\n\n` +
+                         `*🤖 AI & Creative:*\n` +
+                         `🔹 */ai [question]* — Free AI Chatbot (GPT/Claude/Groq)\n` +
+                         `🔹 */image [prompt]* — Generate AI art/photos (Free)\n` +
+                         `🔹 */aisettings* — Configure API Key, Base URL, Persona\n\n` +
+                         `*🛡️ Group Moderation:*\n` +
+                         `🔹 */automod on/off* — Auto-warn on slurs & bad words\n` +
+                         `🔹 */warn @user [reason]* — Issue warning (3 warnings max)\n` +
+                         `🔹 */resetwarn @user* — Clear warnings\n` +
+                         `🔹 */warnings* — View warning count\n\n` +
+                         `*⚡ Utility & Fun:*\n` +
+                         `🔹 */ping* — Check bot response latency & uptime\n` +
+                         `🔹 */react [emoji]* — Add emoji reaction to message\n` +
+                         `🔹 */gif [caption]* — Send animated celebration GIF\n\n` +
+                         `*🏆 Stats & Leaderboard:*\n` +
+                         `🔹 */top* ya */leaderboard* — Top 10 champions\n` +
+                         `🔹 */rank* — Your score, accuracy & player tier\n` +
+                         `🔹 */tagall* — Mention all group members\n\n` +
+                         `*📢 Channels:*\n` +
+                         `🔹 */channel add [link]* — Connect WhatsApp Channel\n` +
+                         `🔹 */channel post* — Post MCQ to channel\n` +
+                         `🔹 */channel autopost [mins]* — Schedule auto-posting\n` +
                          `━━━━━━━━━━━━━━━━━━━━\n` +
-                         `💡 *Tip:* Question Poll me option tap karein, ya text reply (1, 2, 3, 4) bhejein!`;
+                         `💡 *Tip:* Question poll me option tap karein ya 1, 2, 3, 4 reply karein!`;
 
         await sock.sendMessage(remoteJid, { text: helpText });
         break;
