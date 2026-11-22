@@ -10,7 +10,7 @@
 
 An automated, ultra-fast WhatsApp MCQ Quiz Bot designed specifically for WhatsApp Groups. Built with **[@whiskeysockets/baileys](https://github.com/WhiskeySockets/Baileys)** and Node.js native **SQLite**, it sends native single-choice interactive polls, decrypts votes in real time, awards speed bonus points, and maintains group-level and global leaderboards.
 
-[Features](#-key-features) • [Installation](#-getting-started) • [Commands](#-commands-cheat-sheet) • [Configuration](#%EF%B8%8F-configuration) • [Architecture](#-architecture--workflow)
+[Features](#-key-features) • [Detailed Guide (FEATURES.md)](FEATURES.md) • [Installation](#-getting-started) • [Commands](#-commands-cheat-sheet) • [Configuration](#%EF%B8%8F-configuration) • [Architecture](#-architecture--workflow)
 
 </div>
 
@@ -24,7 +24,10 @@ An automated, ultra-fast WhatsApp MCQ Quiz Bot designed specifically for WhatsAp
   - 🥇 First correct voter gets **+10 Points**
   - 👏 Subsequent correct voters get **+6 Points**
   - ❌ Wrong voters get **0 Points**
-- **🏆 Persistent Leaderboard (SQLite):** Tracks top rankers, medals (🥇, 🥈, 🥉), correct answer counts, and fastest response streaks.
+- **🏆 Persistent Leaderboard & Player Tiers:** Tracks rankings with custom tiers (🥉 Rookie, 🥈 Seeker, 🥇 Master, 👑 Grandmaster).
+- **📢 WhatsApp Channel Auto-Posting:** Direct integration with WhatsApp Channels (`@newsletter`). Post questions instantly or set auto-pilot timers (`/channel auto 60`).
+- **✍️ In-Chat Question Creator:** Add new questions directly from WhatsApp chat with `/addq` without touching files.
+- **📢 Group Mention Engine:** Mention all members with `/tagall` or notify everyone when starting a quiz with `/quiz 10 @all`.
 - **👤 Player Profile & Accuracy:** Detailed player stats including group rank, win rate %, and total questions answered via `/rank`.
 - **📚 Smart Question Engine:**
   - Pre-loaded with **200 Unit 1 - Concept of Bharatvarsha (History)** Hindi MCQs.
@@ -35,6 +38,8 @@ An automated, ultra-fast WhatsApp MCQ Quiz Bot designed specifically for WhatsAp
   - **QR Code Scan:** Directly scan in the terminal.
   - **8-Digit Pairing Code:** Connect by entering an 8-character code in WhatsApp without scanning a screen.
 - **🛑 Safe Interrupts:** Stop active quizzes anytime with `/stop` without losing recorded points.
+
+> 📖 **Want to learn how each feature works behind the scenes? Read the comprehensive [FEATURES.md](FEATURES.md) guide.**
 
 ---
 
@@ -120,10 +125,17 @@ Commands can be triggered in groups using **`/`** (or `!`):
 | `/quiz` | Starts a default 5-question round | `/quiz` |
 | `/quiz [count]` | Starts a round with specific number of questions | `/quiz 50` |
 | `/quiz all` | Starts a marathon quiz with all questions (200+) | `/quiz all` |
-| `/quiz [count] [topic]`| Runs questions from a specific category | `/quiz 10 history` |
+| `/quiz [count] @all` | Starts quiz and mentions all group members | `/quiz 10 @all` |
 | `/stop` / `/stopquiz` | Stops the running quiz immediately | `/stop` |
-| `/top` / `/leaderboard`| Displays the group's Top 10 rankings | `/leaderboard` |
-| `/rank` / `/score` | Shows your individual stats, rank & accuracy % | `/rank` |
+| `/top` / `/leaderboard`| Displays the group's Top 10 rankings with tiers | `/leaderboard` |
+| `/rank` / `/score` | Shows individual stats, badge, rank & accuracy % | `/rank` |
+| `/tagall [msg]` | Mentions all group members without restriction | `/tagall Quiz time!` |
+| `/channel set [link]` | Links your WhatsApp Channel to the bot | `/channel set https://...` |
+| `/channel post` | Posts an MCQ poll to the channel right now | `/channel post` |
+| `/channel auto [min]` | Schedules automated channel posting | `/channel auto 60` |
+| `/channel stop` | Stops channel auto-posting | `/channel stop` |
+| `/channel grouplink [link]`| Sets group invite link for channel cross-promotion | `/channel grouplink https://...` |
+| `/addq` | Adds a new MCQ directly from chat | `/addq Q? \| O1, O2, O3, O4 \| 1 \| GK` |
 | `/categories` | Shows all available question topics in database | `/categories` |
 | `/help` | Displays the help menu with all commands | `/help` |
 
