@@ -245,38 +245,53 @@ export function startWebServer(getSock, port = process.env.PORT || 3000) {
       <span>WHATSAPP QUIZ MASTER • WEB PAIRING</span>
     </div>
 
-    <h1>Link Your WhatsApp Bot</h1>
-    <p class="subtitle">Enter your WhatsApp phone number with country code to get your instant 8-digit Pairing Code.</p>
+    <div id="pairingSection">
+      <h1>Link Your WhatsApp Bot</h1>
+      <p class="subtitle">Enter your WhatsApp phone number with country code to get your instant 8-digit Pairing Code.</p>
 
-    <div class="input-group">
-      <label for="phoneNumber">WhatsApp Number</label>
-      <div class="input-wrapper">
-        <input type="tel" id="phoneNumber" placeholder="e.g. 919876543210" autocomplete="off" />
+      <div class="input-group">
+        <label for="phoneNumber">WhatsApp Number</label>
+        <div class="input-wrapper">
+          <input type="tel" id="phoneNumber" placeholder="e.g. 919876543210" autocomplete="off" />
+        </div>
+      </div>
+
+      <button class="btn-primary" id="getBtn" onclick="requestPairingCode()">
+        <div class="spinner" id="spinner"></div>
+        <span id="btnText">Get Pairing Code</span>
+      </button>
+
+      <div class="code-box" id="codeBox">
+        <div class="code-label">Your WhatsApp Pairing Code</div>
+        <div class="code-display" id="codeText">---- ----</div>
+        <button class="copy-btn" id="copyBtn" onclick="copyCode()">
+          <span id="copyIcon">📋</span>
+          <span id="copyLabel">Copy Code</span>
+        </button>
+      </div>
+
+      <div class="instructions">
+        <strong style="color: #fff; display: block; margin-bottom: 6px;">📲 How to connect:</strong>
+        <ol>
+          <li>Open <b>WhatsApp</b> on your mobile phone.</li>
+          <li>Go to <b>Settings</b> &gt; <b>Linked Devices</b> &gt; <b>Link a Device</b>.</li>
+          <li>Tap <b>"Link with phone number instead"</b> at the bottom.</li>
+          <li>Enter the 8-character code generated above!</li>
+        </ol>
       </div>
     </div>
 
-    <button class="btn-primary" id="getBtn" onclick="requestPairingCode()">
-      <div class="spinner" id="spinner"></div>
-      <span id="btnText">Get Pairing Code</span>
-    </button>
-
-    <div class="code-box" id="codeBox">
-      <div class="code-label">Your WhatsApp Pairing Code</div>
-      <div class="code-display" id="codeText">---- ----</div>
-      <button class="copy-btn" id="copyBtn" onclick="copyCode()">
-        <span id="copyIcon">📋</span>
-        <span id="copyLabel">Copy Code</span>
-      </button>
-    </div>
-
-    <div class="instructions">
-      <strong style="color: #fff; display: block; margin-bottom: 6px;">📲 How to connect:</strong>
-      <ol>
-        <li>Open <b>WhatsApp</b> on your mobile phone.</li>
-        <li>Go to <b>Settings</b> &gt; <b>Linked Devices</b> &gt; <b>Link a Device</b>.</li>
-        <li>Tap <b>"Link with phone number instead"</b> at the bottom.</li>
-        <li>Enter the 8-character code generated above!</li>
-      </ol>
+    <div id="connectedSection" style="display: none; padding: 20px 0;">
+      <div style="font-size: 3.5rem; margin-bottom: 14px;">🛡️</div>
+      <h2 style="font-size: 1.6rem; font-weight: 700; color: #fff; margin-bottom: 10px;">Bot is Active &amp; Protected</h2>
+      <p style="color: var(--text-muted); font-size: 0.94rem; line-height: 1.6; margin-bottom: 24px;">
+        WhatsApp Quiz Bot cloud par 24/7 successfully active hai.<br>
+        Security ke liye pairing page ko lock kar diya gaya hai aur phone number completely hidden hai.
+      </p>
+      <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(37, 211, 102, 0.15); border: 1px solid rgba(37, 211, 102, 0.4); color: var(--primary); padding: 10px 22px; border-radius: 50px; font-weight: 600; font-size: 0.95rem;">
+        <span style="width: 10px; height: 10px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 10px var(--primary);"></span>
+        <span>STATUS: 24/7 ONLINE</span>
+      </div>
     </div>
 
     <div class="status-badge" id="statusBadge">Checking connection status...</div>
@@ -288,14 +303,22 @@ export function startWebServer(getSock, port = process.env.PORT || 3000) {
         const res = await fetch('/api/status');
         const data = await res.json();
         const badge = document.getElementById('statusBadge');
+        const pairingSec = document.getElementById('pairingSection');
+        const connectedSec = document.getElementById('connectedSection');
+
         if (data.connected) {
-          badge.innerHTML = '🟢 Bot is currently <b>ONLINE</b> (' + (data.user || 'Connected') + ')';
-          badge.style.color = '#25D366';
+          pairingSec.style.display = 'none';
+          connectedSec.style.display = 'block';
+          badge.innerHTML = '🔒 Session is locked &amp; encrypted';
+          badge.style.color = '#9ca3af';
         } else {
+          pairingSec.style.display = 'block';
+          connectedSec.style.display = 'none';
           badge.innerHTML = '⚪ Bot is waiting for connection...';
+          badge.style.color = '#9ca3af';
         }
       } catch (e) {
-        document.getElementById('statusBadge').innerHTML = '⚠️ Server offline';
+        document.getElementById('statusBadge').innerHTML = '⚠️ Connecting to server...';
       }
     }
     checkStatus();
@@ -362,13 +385,12 @@ export function startWebServer(getSock, port = process.env.PORT || 3000) {
 </html>`);
   });
 
-  // API Status endpoint
+  // API Status endpoint (Privacy protected: never expose phone number)
   app.get('/api/status', (req, res) => {
     const sock = getSock();
     const isConnected = Boolean(sock?.user?.id);
     res.json({
-      connected: isConnected,
-      user: sock?.user?.id || null
+      connected: isConnected
     });
   });
 
@@ -377,14 +399,21 @@ export function startWebServer(getSock, port = process.env.PORT || 3000) {
     res.status(200).send('OK');
   });
 
-  // API Pairing Code endpoint
+  // API Pairing Code endpoint (Locked when connected)
   app.get('/api/pair', async (req, res) => {
+    const sock = getSock();
+    if (sock?.user?.id) {
+      return res.status(403).json({
+        status: false,
+        error: 'Security Lock: Bot is already connected! New pairing requests are disabled.'
+      });
+    }
+
     const phone = (req.query.phone || '').replace(/[^0-9]/g, '');
     if (!phone || phone.length < 8) {
       return res.status(400).json({ status: false, error: 'Valid phone number with country code required' });
     }
 
-    const sock = getSock();
     if (!sock) {
       return res.status(503).json({ status: false, error: 'WhatsApp socket not initialized yet. Please wait.' });
     }
