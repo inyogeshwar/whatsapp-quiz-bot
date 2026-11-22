@@ -71,7 +71,7 @@ function formatDuration(ms) {
 /**
  * Start a new quiz session in a group
  */
-export async function startQuiz(sock, groupJid, questionCount = CONFIG.DEFAULT_QUESTION_COUNT, category = null) {
+export async function startQuiz(sock, groupJid, questionCount = CONFIG.DEFAULT_QUESTION_COUNT, category = null, tagAll = false) {
   if (activeQuizzes.has(groupJid)) {
     await sock.sendMessage(groupJid, {
       text: `⚠️ *A quiz is already active in this group!*\n\nType *${CONFIG.PREFIX}stopquiz* to cancel the current quiz.`
@@ -104,6 +104,16 @@ export async function startQuiz(sock, groupJid, questionCount = CONFIG.DEFAULT_Q
 
   activeQuizzes.set(groupJid, session);
 
+  let mentions = [];
+  if (tagAll && groupJid.endsWith('@g.us')) {
+    try {
+      const meta = await sock.groupMetadata(groupJid);
+      mentions = (meta.participants || []).map(p => p.id);
+    } catch (e) {
+      console.warn('Could not fetch participants for tagall:', e.message);
+    }
+  }
+
   // Announce quiz start
   await sock.sendMessage(groupJid, {
     text: `🎯 *Starting Quiz Round!* 🎯\n━━━━━━━━━━━━━━━━━━━━\n` +
@@ -112,7 +122,9 @@ export async function startQuiz(sock, groupJid, questionCount = CONFIG.DEFAULT_Q
           `⚡ *Fastest Correct:* +${CONFIG.POINTS.FASTEST_CORRECT} pts\n` +
           `✅ *Correct Answer:* +${CONFIG.POINTS.CORRECT} pts\n` +
           `━━━━━━━━━━━━━━━━━━━━\n` +
-          `🚀 *First question coming in 3 seconds... Get ready!*`
+          (tagAll ? `📢 *Notifying all group members!* 📢\n` : '') +
+          `🚀 *First question coming in 3 seconds... Get ready!*`,
+    mentions
   });
 
   setTimeout(() => {

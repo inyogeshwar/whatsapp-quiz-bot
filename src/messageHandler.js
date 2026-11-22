@@ -46,17 +46,56 @@ export async function handleIncomingMessage(sock, msg) {
 
         let count = CONFIG.DEFAULT_QUESTION_COUNT;
         let category = null;
+        const tagAll = args.some(a => a.toLowerCase() === '@all' || a.toLowerCase() === 'tagall' || a.toLowerCase() === 'everyone');
 
-        if (args[0] && args[0].toLowerCase() === 'all') {
+        // Filter out tagall flags from args
+        const cleanArgs = args.filter(a => !['@all', 'tagall', 'everyone'].includes(a.toLowerCase()));
+
+        if (cleanArgs[0] && cleanArgs[0].toLowerCase() === 'all') {
           count = 200; // All questions
-        } else if (args[0] && !isNaN(parseInt(args[0]))) {
-          count = parseInt(args[0]);
-          if (args[1]) category = args[1];
-        } else if (args[0]) {
-          category = args[0];
+        } else if (cleanArgs[0] && !isNaN(parseInt(cleanArgs[0]))) {
+          count = parseInt(cleanArgs[0]);
+          if (cleanArgs[1]) category = cleanArgs[1];
+        } else if (cleanArgs[0]) {
+          category = cleanArgs[0];
         }
 
-        await startQuiz(sock, remoteJid, count, category);
+        await startQuiz(sock, remoteJid, count, category, tagAll);
+        break;
+      }
+
+      case 'tagall':
+      case 'everyone':
+      case 'all': {
+        if (!isGroup) {
+          await sock.sendMessage(remoteJid, { text: `⚠️ Ye command sirf WhatsApp Group me kaam karta hai!` });
+          return;
+        }
+
+        try {
+          const groupMeta = await sock.groupMetadata(remoteJid);
+          const participants = (groupMeta.participants || []).map(p => p.id);
+          const customMsg = args.join(' ') || 'Sabhi log active ho jayein! Quiz shuru ho raha hai.';
+
+          let text = `📢 *ATTENTION EVERYONE* 📢\n` +
+                     `👥 *Group:* ${groupMeta.subject}\n` +
+                     `💬 *Message:* ${customMsg}\n\n` +
+                     `━━━━━━━━━━━━━━━━━━━━\n`;
+
+          participants.forEach((p, idx) => {
+            text += `${idx + 1}. @${p.split('@')[0]}\n`;
+          });
+
+          text += `━━━━━━━━━━━━━━━━━━━━\n⚡ Type */quiz* to start playing!`;
+
+          await sock.sendMessage(remoteJid, {
+            text,
+            mentions: participants
+          });
+        } catch (err) {
+          console.error('Error in tagall:', err);
+          await sock.sendMessage(remoteJid, { text: `❌ Failed to mention members: ${err.message}` });
+        }
         break;
       }
 
@@ -154,7 +193,10 @@ export async function handleIncomingMessage(sock, msg) {
                          `*Quiz Commands:*\n` +
                          `🔹 */quiz* — Start a 5-question quiz\n` +
                          `🔹 */quiz [count]* — Start quiz with specific count (e.g. */quiz 50*, */quiz all*)\n` +
+                         `🔹 */quiz [count] @all* — Start quiz & notify all members\n` +
                          `🔹 */stop* ya */stopquiz* — Stop the active quiz anytime\n\n` +
+                         `*Group & Mentions:*\n` +
+                         `🔹 */tagall [msg]* ya */everyone* — Mention all group members\n\n` +
                          `*Stats & Leaderboard:*\n` +
                          `🔹 */top* ya */leaderboard* — Top 10 players\n` +
                          `🔹 */rank* — Your score & accuracy\n` +
