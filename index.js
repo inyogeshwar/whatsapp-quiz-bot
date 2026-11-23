@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import {
   makeWASocket,
   useMultiFileAuthState,
@@ -18,11 +19,12 @@ import { startWebServer } from './src/webServer.js';
 // Initialize SQLite Database
 initDatabase();
 
-// Current active Baileys socket reference
+// Current active Baileys socket reference & live connection status
 let currentSock = null;
+let isConnected = false;
 
 // Start Web Pairing Dashboard (Flash-MD & Knightbot Style)
-startWebServer(() => currentSock);
+startWebServer(() => currentSock, () => isConnected);
 
 // Pairing code argument check (e.g. node index.js --pairing=919876543210)
 const pairingArg = process.argv.find(arg => arg.startsWith('--pairing'));
@@ -80,16 +82,33 @@ async function startBot() {
     }
 
     if (connection === 'close') {
+      isConnected = false;
       const statusCode = (lastDisconnect?.error)?.output?.statusCode;
-      const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-      console.log(`⚠️ Connection closed. Status code: ${statusCode}. Reconnecting: ${shouldReconnect}`);
+      const isLoggedOut = statusCode === DisconnectReason.loggedOut || statusCode === 401;
+      console.log(`⚠️ Connection closed. Status code: ${statusCode}. Logged out: ${isLoggedOut}`);
 
-      if (shouldReconnect) {
-        setTimeout(startBot, 3000);
+      // Destroy dead socket reference
+      currentSock = null;
+
+      if (isLoggedOut) {
+        console.log('❌ Device logged out from WhatsApp on phone. Purging old session credentials...');
+        try {
+          if (fs.existsSync(CONFIG.AUTH_DIR)) {
+            fs.rmSync(CONFIG.AUTH_DIR, { recursive: true, force: true });
+            console.log('🗑️ Successfully deleted auth_info_baileys folder.');
+          }
+        } catch (err) {
+          console.error('Error clearing auth directory:', err.message);
+        }
+        console.log('🔄 Initializing fresh socket for new pairing session in 2 seconds...');
+        setTimeout(startBot, 2000);
       } else {
-        console.log('❌ Logged out. Delete auth_info_baileys folder to scan new QR code.');
+        console.log('🔄 Temporary disconnect. Reconnecting in 3 seconds...');
+        setTimeout(startBot, 3000);
       }
     } else if (connection === 'open') {
+      isConnected = true;
+      currentSock = sock;
       console.log(`\n🎉 ==========================================`);
       console.log(`✅ WhatsApp Bot Successfully Connected!`);
       console.log(`📱 Connected as: ${sock.user?.id || 'Bot'}`);

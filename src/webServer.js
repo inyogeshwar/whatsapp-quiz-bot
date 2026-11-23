@@ -1,7 +1,9 @@
 import express from 'express';
 import path from 'node:path';
+import fs from 'node:fs';
+import { CONFIG } from './config.js';
 
-export function startWebServer(getSock, port = process.env.PORT || 3000) {
+export function startWebServer(getSock, getIsConnected, port = process.env.PORT || 3000) {
   const app = express();
   app.use(express.json());
 
@@ -292,6 +294,12 @@ export function startWebServer(getSock, port = process.env.PORT || 3000) {
         <span style="width: 10px; height: 10px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 10px var(--primary);"></span>
         <span>STATUS: 24/7 ONLINE</span>
       </div>
+
+      <div style="margin-top: 24px;">
+        <button id="unlinkBtn" onclick="unlinkSession()" style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); color: #f87171; padding: 10px 20px; border-radius: 12px; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+          🔌 Disconnect / Unlink Session
+        </button>
+      </div>
     </div>
 
     <div class="status-badge" id="statusBadge">Checking connection status...</div>
@@ -380,6 +388,26 @@ export function startWebServer(getSock, port = process.env.PORT || 3000) {
         }, 2000);
       });
     }
+
+    async function unlinkSession() {
+      if (!confirm('Kya aap sach me WhatsApp bot ko unlink / disconnect karna chahte hain?')) return;
+      const btn = document.getElementById('unlinkBtn');
+      if (btn) btn.innerText = 'Disconnecting...';
+      try {
+        const res = await fetch('/api/unlink', { method: 'POST' });
+        const data = await res.json();
+        if (data.status) {
+          alert('Session disconnected! Naya pairing code generate karne ke liye page reload ho raha hai.');
+          window.location.reload();
+        } else {
+          alert('Error: ' + data.error);
+          if (btn) btn.innerText = '🔌 Disconnect / Unlink Session';
+        }
+      } catch (err) {
+        alert('Failed: ' + err.message);
+        if (btn) btn.innerText = '🔌 Disconnect / Unlink Session';
+      }
+    }
   </script>
 </body>
 </html>`);
@@ -387,10 +415,10 @@ export function startWebServer(getSock, port = process.env.PORT || 3000) {
 
   // API Status endpoint (Privacy protected: never expose phone number)
   app.get('/api/status', (req, res) => {
-    const sock = getSock();
-    const isConnected = Boolean(sock?.user?.id);
+    const sock = typeof getSock === 'function' ? getSock() : getSock;
+    const connected = typeof getIsConnected === 'function' ? getIsConnected() : Boolean(sock?.user?.id);
     res.json({
-      connected: isConnected
+      connected: Boolean(connected)
     });
   });
 
@@ -399,10 +427,35 @@ export function startWebServer(getSock, port = process.env.PORT || 3000) {
     res.status(200).send('OK');
   });
 
+  // API Unlink / Disconnect endpoint
+  app.post('/api/unlink', async (req, res) => {
+    try {
+      const sock = typeof getSock === 'function' ? getSock() : getSock;
+      if (sock) {
+        try {
+          await sock.logout();
+        } catch (e) {
+          try {
+            sock.end();
+          } catch (err2) {}
+        }
+      }
+      if (fs.existsSync(CONFIG.AUTH_DIR)) {
+        fs.rmSync(CONFIG.AUTH_DIR, { recursive: true, force: true });
+        console.log('🗑️ [WEB API] Cleared auth folder via /api/unlink');
+      }
+      res.json({ status: true, message: 'Session disconnected and credentials cleared.' });
+    } catch (err) {
+      console.error('Error during /api/unlink:', err.message);
+      res.status(500).json({ status: false, error: err.message });
+    }
+  });
+
   // API Pairing Code endpoint (Locked when connected)
   app.get('/api/pair', async (req, res) => {
-    const sock = getSock();
-    if (sock?.user?.id) {
+    const sock = typeof getSock === 'function' ? getSock() : getSock;
+    const connected = typeof getIsConnected === 'function' ? getIsConnected() : Boolean(sock?.user?.id);
+    if (connected) {
       return res.status(403).json({
         status: false,
         error: 'Security Lock: Bot is already connected! New pairing requests are disabled.'
@@ -415,7 +468,7 @@ export function startWebServer(getSock, port = process.env.PORT || 3000) {
     }
 
     if (!sock) {
-      return res.status(503).json({ status: false, error: 'WhatsApp socket not initialized yet. Please wait.' });
+      return res.status(503).json({ status: false, error: 'WhatsApp socket initializing. Please wait 2 seconds and retry.' });
     }
 
     try {
