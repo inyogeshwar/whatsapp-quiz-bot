@@ -83,6 +83,51 @@ export function generateAIImageUrl(prompt) {
 }
 
 /**
+ * Generates and fetches AI Image as a raw Buffer with retry and timeout protection
+ * Eliminates Baileys "Failed to fetch stream" errors completely!
+ * @param {string} prompt - Image description
+ * @returns {Promise<Buffer>}
+ */
+export async function generateAIImageBuffer(prompt) {
+  const cleanPrompt = encodeURIComponent(prompt.trim());
+  const seed = Math.floor(Math.random() * 1000000);
+  const candidateUrls = [
+    `https://image.pollinations.ai/prompt/${cleanPrompt}?width=1024&height=1024&seed=${seed}&nologo=true`,
+    `https://image.pollinations.ai/prompt/${cleanPrompt}?model=turbo&nologo=true`,
+    `https://image.pollinations.ai/prompt/${cleanPrompt}?nologo=true`
+  ];
+
+  let lastError = null;
+  for (const url of candidateUrls) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 20000); // 20s timeout
+
+      const res = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'image/jpeg,image/png,image/*,*/*'
+        }
+      });
+      clearTimeout(timer);
+
+      if (res.ok) {
+        const arrayBuf = await res.arrayBuffer();
+        const buffer = Buffer.from(arrayBuf);
+        if (buffer && buffer.length > 500) {
+          return buffer;
+        }
+      }
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  throw new Error(lastError ? lastError.message : 'AI Image server is temporarily busy. Please try again.');
+}
+
+/**
  * Uses AI to generate structured MCQs on any topic on the fly!
  * @param {string} topic - e.g. "Indian History", "Cricket", "Science"
  * @param {number} count - number of questions (1-5)

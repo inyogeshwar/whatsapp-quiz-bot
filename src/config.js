@@ -1,9 +1,9 @@
 // Configuration file for WhatsApp Quiz Bot
 
 export const CONFIG = {
-  // Command prefix (e.g. /quiz, !quiz)
+  // Command prefix (e.g. /quiz, !quiz, .quiz)
   PREFIX: '/',
-  SUPPORTED_PREFIXES: ['/', '!'],
+  SUPPORTED_PREFIXES: ['/', '!', '.'],
   
   // Bot Name
   BOT_NAME: '🧠 WhatsApp Quiz Master',

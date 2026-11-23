@@ -152,37 +152,40 @@ Render ka free tier 15 minute ke baad sleep par chala jata hai. Isko 24/7 hamesh
 
 ## 🎮 Commands Cheat Sheet
 
-Commands can be triggered in groups using **`/`** (or `!`):
+Commands can be triggered in groups using **`/`**, **`!`**, or **`.`** (e.g. `/quiz`, `.quiz`, `!quiz`):
 
 | Command | Description | Example |
 |---|---|---|
-| `/quiz` | Starts a default 5-question round | `/quiz` |
-| `/quiz [count]` | Starts a round with specific number of questions | `/quiz 50` |
-| `/quiz all` | Starts a marathon quiz with all questions (200+) | `/quiz all` |
-| `/quiz [count] @all` | Starts quiz and mentions all group members | `/quiz 10 @all` |
-| `/stop` / `/stopquiz` | Stops the running quiz immediately | `/stop` |
-| `/top` / `/leaderboard`| Displays the group's Top 10 rankings with tiers | `/leaderboard` |
-| `/rank` / `/score` | Shows individual stats, badge, rank & accuracy % | `/rank` |
-| `/tagall [msg]` | Mentions all group members without restriction | `/tagall Quiz time!` |
-| `/channel set [link]` | Links your WhatsApp Channel to the bot | `/channel set https://...` |
-| `/channel post` | Posts an MCQ poll to the channel right now | `/channel post` |
-| `/channel auto [min]` | Schedules automated channel posting | `/channel auto 60` |
-| `/channel stop` | Stops channel auto-posting | `/channel stop` |
-| `/channel grouplink [link]`| Sets group invite link for channel cross-promotion | `/channel grouplink https://...` |
-| `/addq` | Adds a new MCQ directly from chat | `/addq Q? \| O1, O2, O3, O4 \| 1 \| GK` |
-| `/ai [prompt]` | Ask AI any question (ChatGPT/Claude/Groq/Free) | `/ai What is quantum computing?` |
-| `/aiquiz [topic] [n]`| Generate live fresh MCQs on any topic | `/aiquiz Cricket 5` |
-| `/image [prompt]` | Generate free AI images from text prompt | `/image cute cat astronaut 4k` |
-| `/aisettings` | Configure AI Key, Base URL, Model & Persona | `/aisettings` |
-| `/ping` / `/speed` | Benchmark bot latency, uptime & memory | `/ping` |
-| `/react [emoji]` | React to message with emoji | `/react 🔥` |
-| `/gif [caption]` | Send high-energy animated celebration GIF | `/gif Great job! 🎉` |
-| `/automod [on/off]` | Toggle auto-warning on abusive slurs | `/automod on` |
-| `/warn @user [reason]`| Issue warning to group member | `/warn @user breaking rules` |
-| `/resetwarn @user` | Clear member warnings | `/resetwarn @user` |
-| `/warnings` | Check active warning status | `/warnings` |
-| `/categories` | Shows all available question topics in database | `/categories` |
-| `/help` | Displays the help menu with all commands | `/help` |
+| `/quiz` or `.quiz` | Starts a default 5-question round | `.quiz` |
+| `/quiz [count]` | Starts a round with specific number of questions | `.quiz 50` |
+| `/quiz all` | Starts a marathon quiz with all questions (200+) | `.quiz all` |
+| `/quiz [count] @all` | Starts quiz and mentions all group members | `.quiz 10 @all` |
+| `/stop` / `/stopquiz` | Stops the running quiz immediately | `.stop` |
+| `/top` / `/leaderboard`| Displays the group's Top 10 rankings with tiers | `.leaderboard` |
+| `/rank` / `/score` | Shows individual stats, badge, rank & accuracy % | `.rank` |
+| `/tagall [msg]` | Mentions all group members without restriction | `.tagall Quiz time!` |
+| `/channel set [link]` | Links your WhatsApp Channel to the bot | `.channel set https://...` |
+| `/channel post` | Posts an MCQ poll to the channel right now | `.channel post` |
+| `/channel auto [min]` | Schedules automated channel posting | `.channel auto 60` |
+| `/channel stop` | Stops channel auto-posting | `.channel stop` |
+| `/channel grouplink [link]`| Sets group invite link for channel cross-promotion | `.channel grouplink https://...` |
+| `/addq` | Adds a new MCQ directly from chat | `.addq Q? \| O1, O2, O3, O4 \| 1 \| GK` |
+| `/ai [prompt]` | Ask AI any question (ChatGPT/Claude/Groq/Free) | `.ai What is quantum computing?` |
+| `/aiquiz [topic] [n]`| Generate live fresh MCQs on any topic | `.aiquiz Cricket 5` |
+| `/image [prompt]` | Generate free AI images from text prompt | `.image cute dog 4k` |
+| `/aisettings` | Configure AI Key, Base URL, Model & Persona | `.aisettings` |
+| `/welcome [on/off]` | Welcome card image & mention on new member join | `.welcome on` |
+| `/goodbye [on/off]` | Farewell notification on member left/removed | `.goodbye on` |
+| `/logout` / `/unlink` | Disconnect WhatsApp bot session (Owner/Admin) | `.logout` |
+| `/ping` / `/speed` | Benchmark bot latency, uptime & memory | `.ping` |
+| `/react [emoji]` | React to message with emoji | `.react 🔥` |
+| `/gif [caption]` | Send high-energy animated celebration GIF | `.gif Great job! 🎉` |
+| `/automod [on/off]` | Toggle auto-warning on abusive slurs | `.automod on` |
+| `/warn @user [reason]`| Issue warning to group member | `.warn @user breaking rules` |
+| `/resetwarn @user` | Clear member warnings | `.resetwarn @user` |
+| `/warnings` | Check active warning status | `.warnings` |
+| `/categories` | Shows all available question topics in database | `.categories` |
+| `/help` | Displays the help menu with all commands | `.help` |
 
 ---
 

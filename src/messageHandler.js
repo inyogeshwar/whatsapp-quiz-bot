@@ -17,7 +17,7 @@ import {
   startChannelAutoPost,
   stopChannelAutoPost
 } from './channelEngine.js';
-import { askAI, generateMCQWithAI, getAIConfig, generateAIImageUrl } from './aiEngine.js';
+import { askAI, generateMCQWithAI, getAIConfig, generateAIImageUrl, generateAIImageBuffer } from './aiEngine.js';
 import { checkExplicitContent, recordWarning, resetWarning, getWarningCount } from './moderation.js';
 import { sendReaction, getRandomCelebrationGif } from './reactionHelper.js';
 
@@ -551,7 +551,7 @@ export async function handleIncomingMessage(sock, msg) {
         const prompt = args.join(' ').trim();
         if (!prompt) {
           await sock.sendMessage(remoteJid, {
-            text: `🎨 *AI Image Generator*\n\nUsage:\n👉 *${CONFIG.PREFIX}image a cute cyberpunk cat in neon tokyo*\n👉 *${CONFIG.PREFIX}imagine futuristic sports car in mountains 4k*`
+            text: `🎨 *AI Image Generator*\n\nUsage:\n👉 *${usedPrefix}image a cute cyberpunk cat in neon tokyo*\n👉 *${usedPrefix}imagine futuristic sports car in mountains 4k*`
           });
           return;
         }
@@ -562,9 +562,9 @@ export async function handleIncomingMessage(sock, msg) {
         });
 
         try {
-          const imageUrl = generateAIImageUrl(prompt);
+          const imageBuffer = await generateAIImageBuffer(prompt);
           await sock.sendMessage(remoteJid, {
-            image: { url: imageUrl },
+            image: imageBuffer,
             caption: `✨ *AI Generated Art*\n💭 *Prompt:* ${prompt}\n⚡ *Powered by Pollinations AI*`
           });
           await sendReaction(sock, msg.key, '✅');
@@ -679,6 +679,89 @@ export async function handleIncomingMessage(sock, msg) {
         break;
       }
 
+      case 'welcome': {
+        if (!isGroup) {
+          await sock.sendMessage(remoteJid, { text: `⚠️ Ye command sirf Groups me kaam karta hai!` });
+          return;
+        }
+        const status = (args[0] || '').toLowerCase();
+        if (status === 'on' || status === 'enable' || status === '1') {
+          setBotSetting('welcome_enabled', '1');
+          await sock.sendMessage(remoteJid, { text: `👋 *Welcome Message ENABLED!*\nNaye members ke aane par welcome greeting image & mention send hogi.` });
+        } else if (status === 'off' || status === 'disable' || status === '0') {
+          setBotSetting('welcome_enabled', '0');
+          await sock.sendMessage(remoteJid, { text: `⚠️ *Welcome Message DISABLED.*` });
+        } else {
+          const current = getBotSetting('welcome_enabled') !== '0' ? 'ON' : 'OFF';
+          await sock.sendMessage(remoteJid, {
+            text: `👋 *Welcome Message Status:* ${current}\n\n👉 Type *${usedPrefix}welcome on* ya *${usedPrefix}welcome off*`
+          });
+        }
+        break;
+      }
+
+      case 'goodbye':
+      case 'left': {
+        if (!isGroup) {
+          await sock.sendMessage(remoteJid, { text: `⚠️ Ye command sirf Groups me kaam karta hai!` });
+          return;
+        }
+        const status = (args[0] || '').toLowerCase();
+        if (status === 'on' || status === 'enable' || status === '1') {
+          setBotSetting('goodbye_enabled', '1');
+          await sock.sendMessage(remoteJid, { text: `👋 *Goodbye / Left Message ENABLED!*\nMembers ke group chhodne par farewell alert send hoga.` });
+        } else if (status === 'off' || status === 'disable' || status === '0') {
+          setBotSetting('goodbye_enabled', '0');
+          await sock.sendMessage(remoteJid, { text: `⚠️ *Goodbye / Left Message DISABLED.*` });
+        } else {
+          const current = getBotSetting('goodbye_enabled') !== '0' ? 'ON' : 'OFF';
+          await sock.sendMessage(remoteJid, {
+            text: `👋 *Goodbye Message Status:* ${current}\n\n👉 Type *${usedPrefix}goodbye on* ya *${usedPrefix}goodbye off*`
+          });
+        }
+        break;
+      }
+
+      case 'logout':
+      case 'unlink': {
+        const botOwnerJid = sock.user?.id ? sock.user.id.replace(/:.*@/, '@') : null;
+        const isOwner = botOwnerJid && cleanSender === botOwnerJid;
+
+        let isGroupAdmin = false;
+        if (isGroup) {
+          try {
+            const groupMetadata = await sock.groupMetadata(remoteJid);
+            const participant = groupMetadata?.participants?.find(p => p.id.replace(/:.*@/, '@') === cleanSender);
+            isGroupAdmin = participant?.admin === 'admin' || participant?.admin === 'superadmin';
+          } catch (e) {}
+        }
+
+        if (!isOwner && !isGroupAdmin) {
+          await sock.sendMessage(remoteJid, {
+            text: `⛔ *Permission Denied:*\nSirf Bot Owner (@${botOwnerJid ? botOwnerJid.split('@')[0] : 'Owner'}) ya Group Admin hi bot ko logout / unlink kar sakte hain!`,
+            mentions: botOwnerJid ? [botOwnerJid] : []
+          });
+          return;
+        }
+
+        await sock.sendMessage(remoteJid, {
+          text: `🔌 *Logging out & Unlinking WhatsApp Bot...*\nWhatsApp session close ho raha hai aur credentials delete kiye ja rahe hain.\nNaya pairing code lene ke liye Web Dashboard open karein.`
+        });
+
+        setTimeout(async () => {
+          try {
+            await sock.logout();
+          } catch (e) {
+            try { sock.end(); } catch (err2) {}
+          }
+          if (fs.existsSync(CONFIG.AUTH_DIR)) {
+            fs.rmSync(CONFIG.AUTH_DIR, { recursive: true, force: true });
+            console.log('🗑️ [LOGOUT COMMAND] Purged auth folder via command.');
+          }
+        }, 1500);
+        break;
+      }
+
       case 'categories':
       case 'category': {
         const questions = loadQuestions();
@@ -696,37 +779,41 @@ export async function handleIncomingMessage(sock, msg) {
 
       case 'help':
       case 'menu': {
+        const p = usedPrefix;
         const helpText = `🧠 *${CONFIG.BOT_NAME}* 🧠\n━━━━━━━━━━━━━━━━━━━━\n` +
                          `*🎯 Quiz Commands:*\n` +
-                         `🔹 */quiz* — 5-question quick quiz\n` +
-                         `🔹 */quiz [count]* — Custom length (e.g. */quiz 20*, */quiz all*)\n` +
-                         `🔹 */quiz [count] @all* — Start quiz & mention everyone\n` +
-                         `🔹 */aiquiz [topic] [count]* — AI generates live fresh MCQs\n` +
-                         `🔹 */categories* — View available quiz topics\n` +
-                         `🔹 */stop* — End running quiz\n\n` +
+                         `🔹 *${p}quiz* — 5-question quick quiz\n` +
+                         `🔹 *${p}quiz [count]* — Custom length (e.g. *${p}quiz 20*, *${p}quiz all*)\n` +
+                         `🔹 *${p}quiz [count] @all* — Start quiz & mention everyone\n` +
+                         `🔹 *${p}aiquiz [topic] [count]* — AI generates live fresh MCQs\n` +
+                         `🔹 *${p}categories* — View available quiz topics\n` +
+                         `🔹 *${p}stop* — End running quiz\n\n` +
                          `*🤖 AI & Creative:*\n` +
-                         `🔹 */ai [question]* — Free AI Chatbot (GPT/Claude/Groq)\n` +
-                         `🔹 */image [prompt]* — Generate AI art/photos (Free)\n` +
-                         `🔹 */aisettings* — Configure API Key, Base URL, Persona\n\n` +
-                         `*🛡️ Group Moderation:*\n` +
-                         `🔹 */automod on/off* — Auto-warn on slurs & bad words\n` +
-                         `🔹 */warn @user [reason]* — Issue warning (3 warnings max)\n` +
-                         `🔹 */resetwarn @user* — Clear warnings\n` +
-                         `🔹 */warnings* — View warning count\n\n` +
+                         `🔹 *${p}ai [question]* — Free AI Chatbot (GPT/Claude/Groq)\n` +
+                         `🔹 *${p}image [prompt]* — Generate AI art/photos (Free)\n` +
+                         `🔹 *${p}aisettings* — Configure API Key, Base URL, Persona\n\n` +
+                         `*🛡️ Group Moderation & Welcome:*\n` +
+                         `🔹 *${p}welcome on/off* — Auto-welcome with image & tag\n` +
+                         `🔹 *${p}goodbye on/off* — Auto-farewell message on left\n` +
+                         `🔹 *${p}automod on/off* — Auto-warn on slurs & bad words\n` +
+                         `🔹 *${p}warn @user [reason]* — Issue warning (3 warnings max)\n` +
+                         `🔹 *${p}resetwarn @user* — Clear warnings\n` +
+                         `🔹 *${p}warnings* — View warning count\n\n` +
                          `*⚡ Utility & Fun:*\n` +
-                         `🔹 */ping* — Check bot response latency & uptime\n` +
-                         `🔹 */react [emoji]* — Add emoji reaction to message\n` +
-                         `🔹 */gif [caption]* — Send animated celebration GIF\n\n` +
+                         `🔹 *${p}ping* — Check bot response latency & uptime\n` +
+                         `🔹 *${p}react [emoji]* — Add emoji reaction to message\n` +
+                         `🔹 *${p}gif [caption]* — Send animated celebration GIF\n` +
+                         `🔹 *${p}logout* / *${p}unlink* — Disconnect session (Admin/Owner only)\n\n` +
                          `*🏆 Stats & Leaderboard:*\n` +
-                         `🔹 */top* ya */leaderboard* — Top 10 champions\n` +
-                         `🔹 */rank* — Your score, accuracy & player tier\n` +
-                         `🔹 */tagall* — Mention all group members\n\n` +
+                         `🔹 *${p}top* ya *${p}leaderboard* — Top 10 champions\n` +
+                         `🔹 *${p}rank* — Your score, accuracy & player tier\n` +
+                         `🔹 *${p}tagall* — Mention all group members\n\n` +
                          `*📢 Channels:*\n` +
-                         `🔹 */channel add [link]* — Connect WhatsApp Channel\n` +
-                         `🔹 */channel post* — Post MCQ to channel\n` +
-                         `🔹 */channel autopost [mins]* — Schedule auto-posting\n` +
+                         `🔹 *${p}channel add [link]* — Connect WhatsApp Channel\n` +
+                         `🔹 *${p}channel post* — Post MCQ to channel\n` +
+                         `🔹 *${p}channel autopost [mins]* — Schedule auto-posting\n` +
                          `━━━━━━━━━━━━━━━━━━━━\n` +
-                         `💡 *Tip:* Question poll me option tap karein ya 1, 2, 3, 4 reply karein!`;
+                         `💡 *Prefixes:* Both */*, *!*, and *.* are supported!`;
 
         await sock.sendMessage(remoteJid, { text: helpText });
         break;

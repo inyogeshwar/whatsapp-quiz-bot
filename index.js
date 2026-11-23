@@ -15,6 +15,7 @@ import { handleIncomingMessage } from './src/messageHandler.js';
 import { handlePollUpdate, handlePollVoteUpsert, messageStore } from './src/quizEngine.js';
 import { checkResumeChannelAutoPost } from './src/channelEngine.js';
 import { startWebServer } from './src/webServer.js';
+import { handleParticipantUpdate } from './src/welcomeEngine.js';
 
 // Initialize SQLite Database
 initDatabase();
@@ -144,6 +145,11 @@ async function startBot() {
         await handlePollUpdate(sock, key, update);
       }
     }
+  });
+
+  // Group Participant Updates (Welcome & Goodbye/Left Handler)
+  sock.ev.on('group-participants.update', async (event) => {
+    await handleParticipantUpdate(sock, event);
   });
 }
 
